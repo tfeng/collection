@@ -1,0 +1,31 @@
+{
+  "name": "collection",
+  "id": "collection",
+  "version": "0.1.0",
+  "description": "An efficient native implementation of collection data types for Node.JS",
+  "keywords": [
+    "collection",
+    "native",
+    "util",
+    "vector"
+  ],
+  "author": "Thomas Feng <tfeng@berkeley.edu>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tfeng/collection.git",
+    "web": "https://github.com/tfeng/collection"
+  },
+  "bugs": {
+    "url": "https://github.com/tfeng/collection/issues"
+  },
+  "main": "./lib/collection.js",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://opensource.org/licenses/MIT"
+    }
+  ],
+  "dependencies": {
+    "bindings": "latest"
+  }
+}

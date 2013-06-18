@@ -77,10 +77,15 @@ describe('Vector', function(){
       assert(v3.equals(new Vector([])));
       assert(v3.equals(new Vector()));
 
-      v1.add(new Vector([1,2,3]));
-      array1.push(new Vector([1,2,3]));
+      var newVector = new Vector([1,2,3]);
+      v1.add(newVector);
+      array1.push(newVector);
+      assert(v1.equals(new Vector(array1)));
+
+      v2.add(newVector);
+      array2.push(new Vector(newVector));
       // BE AWARE: Two distinct vectors are never equal using JS ==. vector.equals() is not deep equal.
-      assert(!v1.equals(new Vector(array1)));
+      assert(!v2.equals(new Vector(array2)));
     });
 
     it("should throw error if not exactly one argument is provided", function() {
@@ -158,6 +163,18 @@ describe('Vector', function(){
       assert.throws(function() {
         v1.set(undefined, 0);
       }, Error);
+    });
+  });
+
+  describe("#reverse", function() {
+    it("should reverse all the elements in the vectors", function() {
+      assert.deepEqual(v1.reverse().toArray(), array1.reverse());
+      assert.deepEqual(v2.reverse().toArray(), array2.reverse());
+      assert.deepEqual(v3.reverse().toArray(), array3.reverse());
+
+      assert.deepEqual(v1.toArray(), array1);
+      assert.deepEqual(v2.toArray(), array2);
+      assert.deepEqual(v3.toArray(), array3);
     });
   });
 
@@ -256,4 +273,168 @@ describe('Vector', function(){
     });
   });
 
+  describe("#each", function() {
+    it("should go through all the elements in the vectors", function() {
+      var i1 = 0;
+      v1.each(function(v) {
+        assert.equal(v, array1[i1++]);
+      });
+
+      var i2 = 0;
+      v2.each(function(v) {
+        assert.equal(v, array2[i2++]);
+      });
+
+      var i3 = 0;
+      v3.each(function(v) {
+        assert.equal(v, array3[i3++]);
+      });
+    });
+
+    it("should use modifier to test properties of the iteration", function() {
+      var i1 = 0;
+      v1.each(function(v, m) {
+        assert.equal(m.isFirst(), i1 == 0);
+        assert.equal(m.isLast(), i1 == array1.length - 1);
+        assert.equal(m.index(), i1++);
+      });
+
+      var i2 = 0;
+      v2.each(function(v, m) {
+        assert.equal(m.isFirst(), i2 == 0);
+        assert.equal(m.isLast(), i2 == array2.length - 1);
+        assert.equal(m.index(), i2++);
+      });
+
+      var i3 = 0;
+      v3.each(function(v, m) {
+        assert.equal(m.isFirst(), i3 == 0);
+        assert.equal(m.isLast(), i3 == array3.length - 1);
+        assert.equal(m.index(), i3++);
+      });
+    });
+
+    it("should set values of the vectors by using modifier", function() {
+      v1.each(function(v, m) {
+        m.set(array1[0] + array1[array1.length - 1] - v);
+      });
+      assert.deepEqual(v1.toArray(), array1.reverse());
+
+      var i2 = 0;
+      v2.each(function(v, m) {
+        // The last set() overrides previous remove()'s and set()'s.
+        m.set(array2[array2.length - i2++ - 1]);
+      });
+      assert.deepEqual(v2.toArray(), array2.reverse());
+
+      v3.each(function() {
+        assert(false);
+      });
+    });
+
+    it("should set/remove value with the last set()/remove() call to the modifier", function() {
+      v1.each(function(v, m) {
+        // The last set() overrides previous remove()'s and set()'s.
+        m.remove().set(0).set(array1[0] + array1[array1.length - 1] - v);
+      });
+      assert.deepEqual(v1.toArray(), array1.reverse());
+
+      v1.each(function(v, m) {
+        // The last remove() overrides previous set()'s.
+        m.set(0).set(v + 1).remove();
+      });
+      assert.deepEqual(v1.toArray(), []);
+
+      v1.each(function(v, m) {
+        m.set(0).set(v - 1).remove().remove();
+      });
+      assert.deepEqual(v1.toArray(), []);
+    });
+  });
+
+  it("should insert new elements before the current value by using modifier", function() {
+    v1.each(function(v, m) {
+      if (v % 2 == 0) {
+        m.insertBefore(v / 2);
+      }
+    });
+    assert.deepEqual(v1.toArray(), [1,1,2,3,2,4,5,3,6,7,4,8,9,5,10]);
+
+    v1.each(function(v, m) {
+      if (v % 3 == 0) {
+        m.insertBefore(v / 3, v * 2 / 3);
+      }
+    });
+    assert.deepEqual(v1.toArray(), [1,1,2,1,2,3,2,4,5,1,2,3,2,4,6,7,4,8,3,6,9,5,10]);
+
+    v1.each(function(v, m) {
+      if (v % 4 == 0) {
+        m.insertBefore(v / 4).insertBefore(v / 2).insertBefore(v * 3 / 4);
+      }
+    });
+    assert.deepEqual(v1.toArray(), [1,1,2,1,2,3,2,1,2,3,4,5,1,2,3,2,1,2,3,4,6,7,1,2,3,4,2,4,6,8,3,6,9,5,10]);
+  });
+
+  it("should insert new elements after the current value by using modifier", function() {
+    v1.each(function(v, m) {
+      if (v % 2 == 0) {
+        m.insertAfter(v / 2);
+      }
+    });
+    assert.deepEqual(v1.toArray(), [1,2,1,3,4,2,5,6,3,7,8,4,9,10,5]);
+
+    v1.each(function(v, m) {
+      if (v % 3 == 0) {
+        m.insertAfter(v * 2 / 3, v / 3);
+      }
+    });
+    assert.deepEqual(v1.toArray(), [1,2,1,3,2,1,4,2,5,6,4,2,3,2,1,7,8,4,9,6,3,10,5]);
+
+    v1.each(function(v, m) {
+      if (v % 4 == 0) {
+        m.insertAfter(v * 3 / 4).insertBefore(v / 2).insertBefore(v / 4);
+      }
+    });
+    assert.deepEqual(v1.toArray(), [1,2,1,3,2,1,2,1,4,3,2,5,6,2,1,4,3,2,3,2,1,7,4,2,8,6,2,1,4,3,9,6,3,10,5]);
+  });
+
+  it("should handle insert before/after and set by using the same modifier", function() {
+    v1.each(function(v, m) {
+      if (v % 3 == 0) {
+        m.insertBefore(v / 3, v * 2 / 3);
+        m.insertAfter(v * 2 / 3, v / 3);
+        m.remove();
+      }
+    });
+    assert.deepEqual(v1.toArray(), [1,2,1,2,2,1,4,5,2,4,4,2,7,8,3,6,6,3,10]);
+
+    v1.each(function(v, m) {
+      if (v % 2 == 0) {
+        m.insertBefore(v / 2);
+        m.insertAfter(v / 2);
+        m.set(0);
+      }
+    });
+    assert.deepEqual(v1.toArray(), [1,1,0,1,1,1,0,1,1,0,1,1,2,0,2,5,1,0,1,2,0,2,2,0,2,1,0,1,7,4,0,4,3,3,0,3,3,0,3,3,5,0,5]);
+  });
+
+  it("should tolerate errors in the callback function", function() {
+    assert.throws(function() {
+      v1.each(function() {
+        notExisting == 1;
+      });
+    }, Error);
+
+    assert.throws(function() {
+      v1.each(function() {
+        throw new Error();
+      });
+    }, Error);
+
+    assert.throws(function() {
+      v1.each(function(v, m) {
+        m.doesNotExist();
+      });
+    }, Error);
+  });
 });

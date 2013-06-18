@@ -2,7 +2,7 @@
   "targets": [
     {
       "target_name": "NativeTypes",
-      "sources": ["lib/NativeTypes.cc", "lib/Vector.cc"]
+      "sources": ["src/NativeTypes.cc", "src/Vector.cc"]
     }
   ]
 }

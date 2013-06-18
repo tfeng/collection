@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "Vector.h"
 
 using namespace v8;
@@ -42,6 +43,7 @@ void Vector::Init(Handle<Object> exports) {
   NODE_SET_PROTOTYPE_METHOD(constructor, "add", Add);
   NODE_SET_PROTOTYPE_METHOD(constructor, "get", Get);
   NODE_SET_PROTOTYPE_METHOD(constructor, "set", Set);
+  NODE_SET_PROTOTYPE_METHOD(constructor, "reverse", Reverse);
   NODE_SET_PROTOTYPE_METHOD(constructor, "remove", Remove);
   NODE_SET_PROTOTYPE_METHOD(constructor, "removeRange", RemoveRange);
   NODE_SET_PROTOTYPE_METHOD(constructor, "removeLast", RemoveLast);
@@ -226,6 +228,23 @@ Handle<Value> Vector::Set(const Arguments& args) {
   return args.This();
 }
 
+Handle<Value> Vector::Reverse(const Arguments& args) {
+  CHECK_DOES_NOT_TAKE_ARGUMENT("reverse");
+
+  HandleScope scope;
+  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
+  std::vector< Persistent<Value> >::iterator left = obj->vector.begin();
+  std::vector< Persistent<Value> >::iterator right = obj->vector.end();
+  while (left != right) {
+    right--;
+    if (left != right) {
+      std::swap(*left, *right);
+      left++;
+    }
+  }
+  return args.This();
+}
+
 Handle<Value> Vector::Remove(const Arguments& args) {
   if (args.Length() == 0) {
     return ThrowException(Exception::Error(String::New("remove(index, ...) takes at least one argument.")));
@@ -283,9 +302,7 @@ Handle<Value> Vector::RemoveRange(const Arguments& args) {
 }
 
 Handle<Value> Vector::RemoveLast(const Arguments& args) {
-  if (args.Length() > 0) {
-    return ThrowException(Exception::Error(String::New("removeLast() does not take any argument.")));
-  }
+  CHECK_DOES_NOT_TAKE_ARGUMENT("removeLast");
 
   HandleScope scope;
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());

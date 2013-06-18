@@ -1,8 +1,9 @@
-#ifndef VECTOR_H
-#define VECTOR_H
+#ifndef COLLECTION_VECTOR_H
+#define COLLECTION_VECTOR_H
 
-#include <node.h>
 #include <vector>
+#include <node.h>
+#include "common.h"
 
 using namespace v8;
 
@@ -23,6 +24,7 @@ class Vector : public node::ObjectWrap {
 
     static Handle<Value> Length(const Arguments& args);
     static Handle<Value> Inspect(const Arguments& args);
+    static Handle<Value> IsEmpty(const Arguments& args);
     static Handle<Value> ToArray(const Arguments& args);
     static Handle<Value> ToString(const Arguments& args);
     static Handle<Value> Equals(const Arguments& args);
@@ -45,6 +47,7 @@ class Vector : public node::ObjectWrap {
 
     std::vector< Persistent<Value> > vector;
 
+    friend class ValueComparator;
     friend class VectorModifier;
 };
 

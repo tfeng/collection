@@ -3,13 +3,6 @@
 
 using namespace v8;
 
-#define CHECK_DOES_NOT_TAKE_ARGUMENT(method) \
-do { \
-  if (args.Length() > 0) { \
-    return ThrowException(Exception::Error(String::New(#method "() does not take any argument."))); \
-  } \
-} while (false)
-
 
 /*
  * class Vector
@@ -36,6 +29,7 @@ void Vector::Init(Handle<Object> exports) {
 
   NODE_SET_PROTOTYPE_METHOD(constructor, "length", Length);
   NODE_SET_PROTOTYPE_METHOD(constructor, "inspect", Inspect);
+  NODE_SET_PROTOTYPE_METHOD(constructor, "isEmpty", IsEmpty);
   NODE_SET_PROTOTYPE_METHOD(constructor, "toArray", ToArray);
   NODE_SET_PROTOTYPE_METHOD(constructor, "toString", ToString);
   NODE_SET_PROTOTYPE_METHOD(constructor, "equals", Equals);
@@ -113,7 +107,15 @@ Handle<Value> Vector::Inspect(const Arguments& args) {
   Local<Function> stringify = Local<Function>::Cast(JSON->Get(String::New("stringify")));
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
   Handle<Value> stringifyArgs[] = { obj->ToArray(args) };
-  return scope.Close(stringify->Call(Context::GetCurrent()->Global(), 1, stringifyArgs));
+  return scope.Close(stringify->Call(global, 1, stringifyArgs));
+}
+
+Handle<Value> Vector::IsEmpty(const Arguments& args) {
+  CHECK_DOES_NOT_TAKE_ARGUMENT("isEmpty");
+
+  HandleScope scope;
+  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
+  return scope.Close(Boolean::New(obj->vector.empty()));
 }
 
 Handle<Value> Vector::ToArray(const Arguments& args) {

@@ -43,6 +43,14 @@ describe('Vector', function(){
     });
   });
 
+  describe("#inspect", function() {
+    it("should return whether a vector is empty", function() {
+      assert.equal(v1.isEmpty(), false);
+      assert.equal(v2.isEmpty(), false);
+      assert.equal(v3.isEmpty(), true);
+    });
+  });
+
   describe("#toArray", function() {
     it("should return arrays for the vectors", function() {
       assert.deepEqual(v1.toArray(), array1);

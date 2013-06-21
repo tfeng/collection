@@ -1,24 +1,15 @@
 #include <algorithm>
 #include "Vector.h"
 
+using namespace std;
 using namespace v8;
+
+typedef VectorStorage Storage;
 
 
 /*
  * class Vector
  */
-
-Persistent<FunctionTemplate> Vector::constructor;
-
-Vector::Vector() {
-}
-
-Vector::~Vector() {
-  std::vector< Persistent<Value> >::iterator it = vector.begin();
-  while (it != vector.end()) {
-    (it++)->Dispose();
-  }
-}
 
 void Vector::Init(Handle<Object> exports) {
   HandleScope scope;
@@ -27,34 +18,25 @@ void Vector::Init(Handle<Object> exports) {
   constructor->InstanceTemplate()->SetInternalFieldCount(1); // for constructors
   constructor->SetClassName(String::NewSymbol("Vector"));
 
-  NODE_SET_PROTOTYPE_METHOD(constructor, "length", Length);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "inspect", Inspect);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "isEmpty", IsEmpty);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "toArray", ToArray);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "toString", ToString);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "equals", Equals);
-
-  NODE_SET_PROTOTYPE_METHOD(constructor, "add", Add);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "get", Get);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "set", Set);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "reverse", Reverse);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "remove", Remove);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "removeRange", RemoveRange);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "removeLast", RemoveLast);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "clear", Clear);
-
-  NODE_SET_PROTOTYPE_METHOD(constructor, "each", Each);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "map", Map);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "reduce", Reduce);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "reduceRight", ReduceRight);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "find", Find);
-  NODE_SET_PROTOTYPE_METHOD(constructor, "filter", Filter);
-
   exports->Set(String::NewSymbol("Vector"), constructor->GetFunction());
 }
 
-bool Vector::HasInstance(Handle<Value> value) {
-  return value->IsObject() && constructor->HasInstance(Handle<Object>::Cast(value));
+void Vector::InitializeFields(Handle<Object> thisObject) {
+  Collection<VectorStorage>::InitializeFields(thisObject);
+
+  thisObject->Set(String::NewSymbol("set"), FunctionTemplate::New(Set)->GetFunction());
+  thisObject->Set(String::NewSymbol("reverse"), FunctionTemplate::New(Reverse)->GetFunction());
+  thisObject->Set(String::NewSymbol("remove"), FunctionTemplate::New(Remove)->GetFunction());
+  thisObject->Set(String::NewSymbol("removeAt"), FunctionTemplate::New(RemoveAt)->GetFunction());
+  thisObject->Set(String::NewSymbol("removeRange"), FunctionTemplate::New(RemoveRange)->GetFunction());
+  thisObject->Set(String::NewSymbol("removeLast"), FunctionTemplate::New(RemoveLast)->GetFunction());
+
+  thisObject->Set(String::NewSymbol("each"), FunctionTemplate::New(Each)->GetFunction());
+  thisObject->Set(String::NewSymbol("map"), FunctionTemplate::New(Map)->GetFunction());
+  thisObject->Set(String::NewSymbol("reduce"), FunctionTemplate::New(Reduce)->GetFunction());
+  thisObject->Set(String::NewSymbol("reduceRight"), FunctionTemplate::New(ReduceRight)->GetFunction());
+  thisObject->Set(String::NewSymbol("find"), FunctionTemplate::New(Find)->GetFunction());
+  thisObject->Set(String::NewSymbol("filter"), FunctionTemplate::New(Filter)->GetFunction());
 }
 
 Handle<Value> Vector::New(const Arguments& args) {
@@ -67,152 +49,25 @@ Handle<Value> Vector::New(const Arguments& args) {
       argError = false;
     } else if (args[0]->IsArray()) {
       argError = false;
-    } else if (HasInstance(args[0])) {
+    } else if (CollectionUtil::IsSupportedObject(args[0])) {
       argError = false;
     }
   }
   if (argError) {
-    return ThrowException(Exception::Error(String::New("Argument must be an array, another vector, or omitted.")));
+    return ThrowException(Exception::Error(String::New("Argument must be an array, an object, or omitted.")));
   }
 
   Vector* obj = new Vector();
-  if (args[0]->IsArray()) {
-    Handle<Array> array = Handle<Array>::Cast(args[0]);
-    for (uint32_t i = 0; i < array->Length(); i++) {
-      obj->vector.push_back(Persistent<Value>::New(array->Get(i)));
-    }
-  } else if (args[0]->IsObject()) {
-    Vector* other = ObjectWrap::Unwrap<Vector>(Handle<Object>::Cast(args[0]));
-    std::vector< Persistent<Value> >::iterator it = other->vector.begin();
-    while (it != other->vector.end()) {
-      obj->vector.push_back(Persistent<Value>::New(*it++));
-    }
-  }
   obj->Wrap(args.This());
+
+  obj->InitializeFields(args.This());
+  obj->InitializeValues(args.This(), args[0]);
+
   return args.This();
-}
-
-Handle<Value> Vector::Length(const Arguments& args) {
-  CHECK_DOES_NOT_TAKE_ARGUMENT("length");
-
-  HandleScope scope;
-  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  return scope.Close(Number::New(obj->vector.size()));
-}
-
-Handle<Value> Vector::Inspect(const Arguments& args) {
-  HandleScope scope;
-  Local<Object> global = Context::GetCurrent()->Global();
-  Local<Object> JSON = Local<Object>::Cast(global->Get(String::New("JSON")));
-  Local<Function> stringify = Local<Function>::Cast(JSON->Get(String::New("stringify")));
-  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  Handle<Value> stringifyArgs[] = { obj->ToArray(args) };
-  return scope.Close(stringify->Call(global, 1, stringifyArgs));
-}
-
-Handle<Value> Vector::IsEmpty(const Arguments& args) {
-  CHECK_DOES_NOT_TAKE_ARGUMENT("isEmpty");
-
-  HandleScope scope;
-  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  return scope.Close(Boolean::New(obj->vector.empty()));
-}
-
-Handle<Value> Vector::ToArray(const Arguments& args) {
-  HandleScope scope;
-  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  Local<Array> array = Array::New(obj->vector.size());
-  std::vector< Persistent<Value> >::iterator it = obj->vector.begin();
-  for (uint32_t i = 0; it != obj->vector.end(); it++, i++) {
-    array->Set(i, Local<Value>::New(*it));
-  }
-  return scope.Close(array);
-}
-
-Handle<Value> Vector::ToString(const Arguments& args) {
-  CHECK_DOES_NOT_TAKE_ARGUMENT("toString");
-
-  HandleScope scope;
-  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  return scope.Close(obj->ToArray(args)->ToString());
-}
-
-Handle<Value> Vector::Equals(const Arguments& args) {
-  if (args.Length() != 1) {
-    return ThrowException(Exception::Error(String::New("equals(value) takes one argument.")));
-  }
-
-  HandleScope scope;
-  if (HasInstance(args[0])) {
-    Vector* obj1 = ObjectWrap::Unwrap<Vector>(args.This());
-    std::vector< Persistent<Value> >::iterator it1 = obj1->vector.begin();
-    Vector* obj2 = ObjectWrap::Unwrap<Vector>(Handle<Object>::Cast(args[0]));
-    std::vector< Persistent<Value> >::iterator it2 = obj2->vector.begin();
-    while (it1 != obj1->vector.end() && it2 != obj2->vector.end()) {
-      Persistent<Value> v1 = *it1++;
-      Persistent<Value> v2 = *it2++;
-      if (!v1->Equals(v2)) {
-        return scope.Close(Boolean::New(false));
-      }
-    }
-    if (it1 != obj1->vector.end() || it2 != obj2->vector.end()) {
-      return scope.Close(Boolean::New(false));
-    } else {
-      return scope.Close(Boolean::New(true));
-    }
-  } else {
-    return scope.Close(Boolean::New(false));
-  }
-}
-
-Handle<Value> Vector::Add(const Arguments& args) {
-  if (args.Length() == 0) {
-    return ThrowException(Exception::Error(String::New("add(value) takes at least one argument.")));
-  }
-
-  HandleScope scope;
-  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  for (int i = 0; i < args.Length(); i++) {
-    obj->vector.push_back(Persistent<Value>::New(args[i]));
-  }
-  return args.This();
-}
-
-Handle<Value> Vector::Get(const Arguments& args) {
-  if (args.Length() == 0) {
-    return ThrowException(Exception::Error(String::New("get(index, ...) takes at least one argument.")));
-  }
-  for (int i = 0; i < args.Length(); i++) {
-    Handle<Value> arg = args[i];
-    if (!(arg->IsUndefined()) && !(arg->IsNull()) && !(arg->IsUint32())) {
-      return ThrowException(Exception::Error(String::New("get(index, ...) takes only integer arguments.")));
-    }
-  }
-
-  HandleScope scope;
-  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  if (args.Length() == 1 && args[0]->IsUint32()) {
-    uint32_t index = args[0]->Uint32Value();
-    if (index < obj->vector.size()) {
-      return scope.Close(Local<Value>::New(obj->vector[index]));
-    }
-  } else {
-    Handle<Array> array = Array::New();
-    for (int i = 0, j = 0; i < args.Length(); i++) {
-      Handle<Value> arg = args[i];
-      if (arg->IsUint32()) {
-        uint32_t index = arg->Uint32Value();
-        if (index < obj->vector.size()) {
-          array->Set(j++, Local<Value>::New(obj->vector[index]));
-        }
-      }
-    }
-    return scope.Close(array);
-  }
-  return Undefined();
 }
 
 Handle<Value> Vector::Set(const Arguments& args) {
+  CHECK_ITERATING("set", args);
   if (args.Length() != 2 || !(args[0]->IsUint32())) {
     return ThrowException(Exception::Error(String::New("set(index, value) takes an integer index and a value.")));
   }
@@ -221,8 +76,8 @@ Handle<Value> Vector::Set(const Arguments& args) {
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
   if (!args[0]->IsUndefined()) {
     uint32_t index = args[0]->Uint32Value();
-    if (index < obj->vector.size()) {
-      std::vector< Persistent<Value> >::iterator it = obj->vector.begin() + index;
+    if (index < obj->storage.size()) {
+      VectorStorage::iterator it = obj->storage.begin() + index;
       it->Dispose();
       *it = Persistent<Value>::New(args[1]);
     }
@@ -231,16 +86,17 @@ Handle<Value> Vector::Set(const Arguments& args) {
 }
 
 Handle<Value> Vector::Reverse(const Arguments& args) {
-  CHECK_DOES_NOT_TAKE_ARGUMENT("reverse");
+  CHECK_ITERATING("reverse", args);
+  CHECK_DOES_NOT_TAKE_ARGUMENT("reverse", args);
 
   HandleScope scope;
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  std::vector< Persistent<Value> >::iterator left = obj->vector.begin();
-  std::vector< Persistent<Value> >::iterator right = obj->vector.end();
+  VectorStorage::iterator left = obj->storage.begin();
+  VectorStorage::iterator right = obj->storage.end();
   while (left != right) {
     right--;
     if (left != right) {
-      std::swap(*left, *right);
+      swap(*left, *right);
       left++;
     }
   }
@@ -248,13 +104,39 @@ Handle<Value> Vector::Reverse(const Arguments& args) {
 }
 
 Handle<Value> Vector::Remove(const Arguments& args) {
+  CHECK_ITERATING("remove", args);
   if (args.Length() == 0) {
-    return ThrowException(Exception::Error(String::New("remove(index, ...) takes at least one argument.")));
+    return ThrowException(Exception::Error(String::New("remove(value, ...) takes at least one argument.")));
+  }
+
+  HandleScope scope;
+  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
+  ValueComparator comparator;
+  for (int i = 0; i < args.Length(); i++) {
+    Handle<Value> arg = args[i];
+    VectorStorage::iterator it = obj->storage.begin();
+    while (it != obj->storage.end()) {
+      if (!comparator(*it, arg) && !comparator(arg, *it)) {
+        it->Dispose();
+        it = obj->storage.erase(it);
+        break;
+      } else {
+        it++;
+      }
+    }
+  }
+  return args.This();
+}
+
+Handle<Value> Vector::RemoveAt(const Arguments& args) {
+  CHECK_ITERATING("removeAt", args);
+  if (args.Length() == 0) {
+    return ThrowException(Exception::Error(String::New("removeAt(index, ...) takes at least one argument.")));
   }
   for (int i = 0; i < args.Length(); i++) {
     Handle<Value> arg = args[i];
     if (!(arg->IsUndefined()) && !(arg->IsNull()) && !(arg->IsUint32())) {
-      return ThrowException(Exception::Error(String::New("remove(index, ...) takes only integer arguments.")));
+      return ThrowException(Exception::Error(String::New("removeAt(index, ...) takes only integer arguments.")));
     }
   }
 
@@ -264,10 +146,10 @@ Handle<Value> Vector::Remove(const Arguments& args) {
     Handle<Value> arg = args[i];
     if (arg->IsUint32()) {
       uint32_t index = arg->Uint32Value() - removed;
-      if (index < obj->vector.size()) {
-        std::vector< Persistent<Value> >::iterator it = obj->vector.begin() + index;
+      if (index < obj->storage.size()) {
+        VectorStorage::iterator it = obj->storage.begin() + index;
         it->Dispose();
-        obj->vector.erase(it);
+        obj->storage.erase(it);
         removed++;
       }
     }
@@ -276,6 +158,7 @@ Handle<Value> Vector::Remove(const Arguments& args) {
 }
 
 Handle<Value> Vector::RemoveRange(const Arguments& args) {
+  CHECK_ITERATING("removeRange", args);
   if (args.Length() != 2) {
     return ThrowException(Exception::Error(String::New("removeRange(start, end) takes two arguments.")));
   }
@@ -287,50 +170,40 @@ Handle<Value> Vector::RemoveRange(const Arguments& args) {
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
   uint32_t start = args[0]->Uint32Value();
   uint32_t end = args[1]->Uint32Value();
-  if (end > obj->vector.size()) {
-    end = obj->vector.size();
+  if (end > obj->storage.size()) {
+    end = obj->storage.size();
   }
-  if (obj->vector.size() == 0 || start >= obj->vector.size() || end <= start) {
+  if (obj->storage.size() == 0 || start >= obj->storage.size() || end <= start) {
     return args.This();
   }
 
-  std::vector< Persistent<Value> >::iterator it = obj->vector.begin() + start;
-  while (it != obj->vector.begin() + end && it != obj->vector.end()) {
+  VectorStorage::iterator it = obj->storage.begin() + start;
+  while (it != obj->storage.begin() + end && it != obj->storage.end()) {
     (it++)->Dispose();
   }
 
-  obj->vector.erase(obj->vector.begin() + start, obj->vector.begin() + end);
+  obj->storage.erase(obj->storage.begin() + start, obj->storage.begin() + end);
   return args.This();
 }
 
 Handle<Value> Vector::RemoveLast(const Arguments& args) {
-  CHECK_DOES_NOT_TAKE_ARGUMENT("removeLast");
+  CHECK_ITERATING("removeLast", args);
+  CHECK_DOES_NOT_TAKE_ARGUMENT("removeLast", args);
 
   HandleScope scope;
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  if (obj->vector.size() > 0) {
-    (obj->vector.end() - 1)->Dispose();
-    obj->vector.pop_back();
+  if (obj->storage.size() > 0) {
+    (obj->storage.end() - 1)->Dispose();
+    obj->storage.pop_back();
   }
-  return args.This();
-}
-
-Handle<Value> Vector::Clear(const Arguments& args) {
-  CHECK_DOES_NOT_TAKE_ARGUMENT("clear");
-
-  HandleScope scope;
-  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-
-  std::vector< Persistent<Value> >::iterator it = obj->vector.begin();
-  while (it != obj->vector.end()) {
-    (it++)->Dispose();
-  }
-
-  obj->vector.clear();
   return args.This();
 }
 
 Handle<Value> Vector::Each(const Arguments& args) {
+  return ObjectWrap::Unwrap<Vector>(args.This())->Iterate(_Each, args);
+}
+
+Handle<Value> Vector::_Each(const Arguments& args) {
   if (args.Length() != 1 || !(args[0]->IsFunction())) {
     return ThrowException(Exception::Error(String::New("each(function) takes a function argument.")));
   }
@@ -340,15 +213,16 @@ Handle<Value> Vector::Each(const Arguments& args) {
   Local<Function> function = Local<Function>::Cast(args[0]);
   TryCatch tryCatch;
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  Local<Object> modifierValue = VectorModifier::constructor->GetFunction()->NewInstance(0, (Handle<Value>[]){});
-  std::vector< Persistent<Value> >::iterator it = obj->vector.begin();
+  Handle<Value> parameters[0];
+  Local<Object> modifierValue = VectorModifier::constructor->GetFunction()->NewInstance(0, parameters);
+  VectorStorage::iterator it = obj->storage.begin();
   int i = 0;
   bool isFirst = true;
-  while (it != obj->vector.end()) {
+  while (it != obj->storage.end()) {
     Persistent<Value> value = *it;
     VectorModifier* modifier = ObjectWrap::Unwrap<VectorModifier>(modifierValue);
     modifier->isFirst = isFirst;
-    modifier->isLast = it + 1 == obj->vector.end();
+    modifier->isLast = it + 1 == obj->storage.end();
     modifier->index = i;
     isFirst = false;
     Handle<Value> result = function->Call(global, 2, (Handle<Value>[]){value, modifierValue});
@@ -361,28 +235,35 @@ Handle<Value> Vector::Each(const Arguments& args) {
       *it = modifier->replace;
     }
     if (modifier->insertedBefore.size() > 0) {
-      obj->vector.insert(it, modifier->insertedBefore.begin(), modifier->insertedBefore.end());
+      obj->storage.insert(it, modifier->insertedBefore.begin(), modifier->insertedBefore.end());
       i += modifier->insertedBefore.size();
-      it = obj->vector.begin() + i;
+      it = obj->storage.begin() + i;
     }
     if (modifier->removed) {
       it->Dispose();
-      obj->vector.erase(it);
+      obj->storage.erase(it);
     } else {
       it++;
       i++;
     }
     if (modifier->insertedAfter.size() > 0) {
-      obj->vector.insert(it, modifier->insertedAfter.begin(), modifier->insertedAfter.end());
+      obj->storage.insert(it, modifier->insertedAfter.begin(), modifier->insertedAfter.end());
       i += modifier->insertedAfter.size();
-      it = obj->vector.begin() + i;
+      it = obj->storage.begin() + i;
     }
     modifier->clear(false);
+    if (result->IsFalse()) {
+      break;
+    }
   }
   return args.This();
 }
 
 Handle<Value> Vector::Map(const Arguments& args) {
+  return ObjectWrap::Unwrap<Vector>(args.This())->Iterate(_Map, args);
+}
+
+Handle<Value> Vector::_Map(const Arguments& args) {
   if (args.Length() != 1 || !(args[0]->IsFunction())) {
     return ThrowException(Exception::Error(String::New("map(function) takes a function argument.")));
   }
@@ -392,8 +273,8 @@ Handle<Value> Vector::Map(const Arguments& args) {
   Local<Function> function = Local<Function>::Cast(args[0]);
   TryCatch tryCatch;
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  std::vector< Persistent<Value> >::iterator it = obj->vector.begin();
-  while (it != obj->vector.end()) {
+  VectorStorage::iterator it = obj->storage.begin();
+  while (it != obj->storage.end()) {
     Persistent<Value> value = *it;
     Handle<Value> result = function->Call(global, 1, (Handle<Value>[]){value});
     if (result.IsEmpty()) {
@@ -406,6 +287,10 @@ Handle<Value> Vector::Map(const Arguments& args) {
 }
 
 Handle<Value> Vector::Reduce(const Arguments& args) {
+  return ObjectWrap::Unwrap<Vector>(args.This())->Iterate(_Reduce, args);
+}
+
+Handle<Value> Vector::_Reduce(const Arguments& args) {
   if (args.Length() != 2 || !(args[0]->IsFunction())) {
     return ThrowException(Exception::Error(String::New("reduce(function, memo) takes a function argument and a memo argument.")));
   }
@@ -416,8 +301,8 @@ Handle<Value> Vector::Reduce(const Arguments& args) {
   TryCatch tryCatch;
   Handle<Value> memo = args[1];
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  std::vector< Persistent<Value> >::iterator it = obj->vector.begin();
-  while (it != obj->vector.end()) {
+  VectorStorage::iterator it = obj->storage.begin();
+  while (it != obj->storage.end()) {
     Persistent<Value> value = *it++;
     memo = function->Call(global, 2, (Handle<Value>[]){memo, value});
     if (memo.IsEmpty()) {
@@ -428,6 +313,10 @@ Handle<Value> Vector::Reduce(const Arguments& args) {
 }
 
 Handle<Value> Vector::ReduceRight(const Arguments& args) {
+  return ObjectWrap::Unwrap<Vector>(args.This())->Iterate(_ReduceRight, args);
+}
+
+Handle<Value> Vector::_ReduceRight(const Arguments& args) {
   if (args.Length() != 2 || !(args[0]->IsFunction())) {
     return ThrowException(Exception::Error(String::New("reduceRight(function, memo) takes a function argument and a memo argument.")));
   }
@@ -438,8 +327,8 @@ Handle<Value> Vector::ReduceRight(const Arguments& args) {
   TryCatch tryCatch;
   Handle<Value> memo = args[1];
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  std::vector< Persistent<Value> >::iterator it = obj->vector.end();
-  while (it != obj->vector.begin()) {
+  VectorStorage::iterator it = obj->storage.end();
+  while (it != obj->storage.begin()) {
     Persistent<Value> value = *--it;
     memo = function->Call(global, 2, (Handle<Value>[]){memo, value});
     if (memo.IsEmpty()) {
@@ -450,6 +339,10 @@ Handle<Value> Vector::ReduceRight(const Arguments& args) {
 }
 
 Handle<Value> Vector::Find(const Arguments& args) {
+  return ObjectWrap::Unwrap<Vector>(args.This())->Iterate(_Find, args);
+}
+
+Handle<Value> Vector::_Find(const Arguments& args) {
   if (args.Length() != 1 || !(args[0]->IsFunction())) {
     return ThrowException(Exception::Error(String::New("find(function) takes a function argument.")));
   }
@@ -459,8 +352,8 @@ Handle<Value> Vector::Find(const Arguments& args) {
   Local<Function> function = Local<Function>::Cast(args[0]);
   TryCatch tryCatch;
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  std::vector< Persistent<Value> >::iterator it = obj->vector.begin();
-  while (it != obj->vector.end()) {
+  VectorStorage::iterator it = obj->storage.begin();
+  while (it != obj->storage.end()) {
     Persistent<Value> value = *it++;
     Handle<Value> result = function->Call(global, 1, (Handle<Value>[]){value});
     if (result.IsEmpty()) {
@@ -473,6 +366,10 @@ Handle<Value> Vector::Find(const Arguments& args) {
 }
 
 Handle<Value> Vector::Filter(const Arguments& args) {
+  return ObjectWrap::Unwrap<Vector>(args.This())->Iterate(_Filter, args);
+}
+
+Handle<Value> Vector::_Filter(const Arguments& args) {
   if (args.Length() != 1 || !(args[0]->IsFunction())) {
     return ThrowException(Exception::Error(String::New("find(function) takes a function argument.")));
   }
@@ -483,9 +380,9 @@ Handle<Value> Vector::Filter(const Arguments& args) {
   TryCatch tryCatch;
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
   Local<Array> array = Array::New();
-  std::vector< Persistent<Value> >::iterator it = obj->vector.begin();
+  VectorStorage::iterator it = obj->storage.begin();
   int i = 0;
-  while (it != obj->vector.end()) {
+  while (it != obj->storage.end()) {
     Persistent<Value> value = *it++;
     Handle<Value> result = function->Call(global, 1, (Handle<Value>[]){value});
     if (result.IsEmpty()) {
@@ -504,13 +401,6 @@ Handle<Value> Vector::Filter(const Arguments& args) {
 
 Persistent<FunctionTemplate> VectorModifier::constructor;
 
-VectorModifier::VectorModifier() {
-  clear(false);
-}
-
-VectorModifier::~VectorModifier() {
-}
-
 void VectorModifier::Init(Handle<Object> exports) {
   HandleScope scope;
 
@@ -519,6 +409,32 @@ void VectorModifier::Init(Handle<Object> exports) {
   constructor->SetClassName(String::NewSymbol("VectorModifier"));
 
   exports->Set(String::NewSymbol("VectorModifier"), constructor->GetFunction());
+}
+
+void VectorModifier::clear(bool dispose) {
+  if (dispose) {
+    replace.Dispose();
+    VectorStorage::iterator it = insertedBefore.begin();
+    while (it != insertedBefore.end()) {
+      (it++)->Dispose();
+    }
+    it = insertedAfter.begin();
+    while (it != insertedAfter.end()) {
+      (it++)->Dispose();
+    }
+  }
+
+  replace = Persistent<Value>();
+  removed = false;
+  insertedBefore.clear();
+  insertedAfter.clear();
+}
+
+VectorModifier::VectorModifier() {
+  clear(false);
+}
+
+VectorModifier::~VectorModifier() {
 }
 
 Handle<Value> VectorModifier::New(const Arguments& args) {
@@ -541,27 +457,8 @@ Handle<Value> VectorModifier::New(const Arguments& args) {
   return args.This();
 }
 
-void VectorModifier::clear(bool dispose) {
-  if (dispose) {
-    replace.Dispose();
-    std::vector< Persistent<Value> >::iterator it = insertedBefore.begin();
-    while (it != insertedBefore.end()) {
-      (it++)->Dispose();
-    }
-    it = insertedAfter.begin();
-    while (it != insertedAfter.end()) {
-      (it++)->Dispose();
-    }
-  }
-
-  replace = Persistent<Value>();
-  removed = false;
-  insertedBefore.clear();
-  insertedAfter.clear();
-}
-
 Handle<Value> VectorModifier::IsFirst(const Arguments& args) {
-  CHECK_DOES_NOT_TAKE_ARGUMENT("isFirst");
+  CHECK_DOES_NOT_TAKE_ARGUMENT("isFirst", args);
 
   HandleScope scope;
   VectorModifier* obj = ObjectWrap::Unwrap<VectorModifier>(args.This());
@@ -569,7 +466,7 @@ Handle<Value> VectorModifier::IsFirst(const Arguments& args) {
 }
 
 Handle<Value> VectorModifier::IsLast(const Arguments& args) {
-  CHECK_DOES_NOT_TAKE_ARGUMENT("isLast");
+  CHECK_DOES_NOT_TAKE_ARGUMENT("isLast", args);
 
   HandleScope scope;
   VectorModifier* obj = ObjectWrap::Unwrap<VectorModifier>(args.This());
@@ -577,7 +474,7 @@ Handle<Value> VectorModifier::IsLast(const Arguments& args) {
 }
 
 Handle<Value> VectorModifier::Index(const Arguments& args) {
-  CHECK_DOES_NOT_TAKE_ARGUMENT("index");
+  CHECK_DOES_NOT_TAKE_ARGUMENT("index", args);
 
   HandleScope scope;
   VectorModifier* obj = ObjectWrap::Unwrap<VectorModifier>(args.This());
@@ -597,7 +494,7 @@ Handle<Value> VectorModifier::Set(const Arguments& args) {
 }
 
 Handle<Value> VectorModifier::Remove(const Arguments& args) {
-  CHECK_DOES_NOT_TAKE_ARGUMENT("remove");
+  CHECK_DOES_NOT_TAKE_ARGUMENT("remove", args);
 
   HandleScope scope;
   VectorModifier* obj = ObjectWrap::Unwrap<VectorModifier>(args.This());

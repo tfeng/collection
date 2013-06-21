@@ -5,53 +5,59 @@
 #include <node.h>
 #include "common.h"
 
+using namespace node;
+using namespace std;
 using namespace v8;
 
 class VectorModifier;
 
-class Vector : public node::ObjectWrap {
+
+/*
+ * class Vector
+ */
+
+typedef vector< Persistent<Value> > VectorStorage;
+
+class Vector : public Collection<VectorStorage> {
   public:
     static void Init(Handle<Object> exports);
-    static bool HasInstance(v8::Handle<v8::Value> val);
 
-    static Persistent<FunctionTemplate> constructor;
+  protected:
+    virtual void InitializeFields(Handle<Object> thisObject);
 
   private:
-    Vector();
-    ~Vector();
-
     static Handle<Value> New(const Arguments& args);
 
-    static Handle<Value> Length(const Arguments& args);
-    static Handle<Value> Inspect(const Arguments& args);
-    static Handle<Value> IsEmpty(const Arguments& args);
-    static Handle<Value> ToArray(const Arguments& args);
-    static Handle<Value> ToString(const Arguments& args);
-    static Handle<Value> Equals(const Arguments& args);
-
-    static Handle<Value> Add(const Arguments& args);
-    static Handle<Value> Get(const Arguments& args);
     static Handle<Value> Set(const Arguments& args);
     static Handle<Value> Reverse(const Arguments& args);
     static Handle<Value> Remove(const Arguments& args);
+    static Handle<Value> RemoveAt(const Arguments& args);
     static Handle<Value> RemoveRange(const Arguments& args);
     static Handle<Value> RemoveLast(const Arguments& args);
-    static Handle<Value> Clear(const Arguments& args);
 
     static Handle<Value> Each(const Arguments& args);
+    static Handle<Value> _Each(const Arguments& args);
     static Handle<Value> Map(const Arguments& args);
+    static Handle<Value> _Map(const Arguments& args);
     static Handle<Value> Reduce(const Arguments& args);
+    static Handle<Value> _Reduce(const Arguments& args);
     static Handle<Value> ReduceRight(const Arguments& args);
+    static Handle<Value> _ReduceRight(const Arguments& args);
     static Handle<Value> Find(const Arguments& args);
+    static Handle<Value> _Find(const Arguments& args);
     static Handle<Value> Filter(const Arguments& args);
-
-    std::vector< Persistent<Value> > vector;
+    static Handle<Value> _Filter(const Arguments& args);
 
     friend class ValueComparator;
     friend class VectorModifier;
 };
 
-class VectorModifier : public node::ObjectWrap {
+
+/*
+ * class VectorModifier
+ */
+
+class VectorModifier : public ObjectWrap {
   public:
     static void Init(Handle<Object> exports);
 
@@ -79,8 +85,8 @@ class VectorModifier : public node::ObjectWrap {
     uint32_t index;
     Persistent<Value> replace;
     bool removed;
-    std::vector< Persistent<Value> > insertedBefore;
-    std::vector< Persistent<Value> > insertedAfter;
+    VectorStorage insertedBefore;
+    VectorStorage insertedAfter;
 
     friend class Vector;
 };

@@ -5,27 +5,27 @@
 #include <node.h>
 #include "common.h"
 
+using namespace std;
 using namespace v8;
 
-class Set : public node::ObjectWrap {
+
+/*
+ * class Set
+ */
+
+typedef set<Persistent<Value>, ValueComparator> SetStorage;
+
+class Set : public Collection<SetStorage> {
   public:
     static void Init(Handle<Object> exports);
-    static bool HasInstance(v8::Handle<v8::Value> val);
 
-    static Persistent<FunctionTemplate> constructor;
+  protected:
+    virtual void InitializeFields(Handle<Object> thisObject);
 
   private:
-    Set();
-    ~Set();
-
     static Handle<Value> New(const Arguments& args);
 
-    static Handle<Value> Size(const Arguments& args);
-    static Handle<Value> Inspect(const Arguments& args);
-    static Handle<Value> IsEmpty(const Arguments& args);
-    static Handle<Value> ToArray(const Arguments& args);
-
-    std::set< Persistent<Value>, ValueComparator > set;
+    static Handle<Value> Remove(const Arguments& args);
 };
 
 #endif

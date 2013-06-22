@@ -26,6 +26,9 @@ class Set : public Collection<SetStorage> {
     static Handle<Value> New(const Arguments& args);
 
     static Handle<Value> Remove(const Arguments& args);
+
+    static Handle<Value> Each(const Arguments& args);
+    static Handle<Value> _Each(const Arguments& args);
 };
 
 #endif

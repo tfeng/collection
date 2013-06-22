@@ -14,7 +14,7 @@ typedef VectorStorage Storage;
 void Vector::Init(Handle<Object> exports) {
   HandleScope scope;
 
-  constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(Vector::New));
+  constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(New));
   constructor->InstanceTemplate()->SetInternalFieldCount(1); // for constructors
   constructor->SetClassName(String::NewSymbol("Vector"));
 
@@ -22,7 +22,9 @@ void Vector::Init(Handle<Object> exports) {
 }
 
 void Vector::InitializeFields(Handle<Object> thisObject) {
-  Collection<VectorStorage>::InitializeFields(thisObject);
+  Collection<Storage>::InitializeFields(thisObject);
+
+  thisObject->Set(String::NewSymbol("index"), FunctionTemplate::New(Index)->GetFunction());
 
   thisObject->Set(String::NewSymbol("set"), FunctionTemplate::New(Set)->GetFunction());
   thisObject->Set(String::NewSymbol("reverse"), FunctionTemplate::New(Reverse)->GetFunction());
@@ -66,6 +68,33 @@ Handle<Value> Vector::New(const Arguments& args) {
   return args.This();
 }
 
+Handle<Value> Vector::Index(const Arguments& args) {
+  if (args.Length() != 1) {
+    return ThrowException(Exception::Error(String::New("index(value) takes one argument.")));
+  }
+
+  HandleScope scope;
+  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
+  Handle<Value> arg = args[0];
+  ValueComparator comparator;
+  Storage::iterator it = obj->storage.begin();
+  int i = 0, index = -1;
+  while (it != obj->storage.end()) {
+    if (!comparator(*it, arg) && !comparator(arg, *it)) {
+      index = i;
+      break;
+    } else {
+      it++;
+      i++;
+    }
+  }
+  if (index == -1) {
+    return Undefined();
+  } else {
+    return scope.Close(Number::New(index));
+  }
+}
+
 Handle<Value> Vector::Set(const Arguments& args) {
   CHECK_ITERATING("set", args);
   if (args.Length() != 2 || !(args[0]->IsUint32())) {
@@ -77,7 +106,7 @@ Handle<Value> Vector::Set(const Arguments& args) {
   if (!args[0]->IsUndefined()) {
     uint32_t index = args[0]->Uint32Value();
     if (index < obj->storage.size()) {
-      VectorStorage::iterator it = obj->storage.begin() + index;
+      Storage::iterator it = obj->storage.begin() + index;
       it->Dispose();
       *it = Persistent<Value>::New(args[1]);
     }
@@ -91,8 +120,8 @@ Handle<Value> Vector::Reverse(const Arguments& args) {
 
   HandleScope scope;
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  VectorStorage::iterator left = obj->storage.begin();
-  VectorStorage::iterator right = obj->storage.end();
+  Storage::iterator left = obj->storage.begin();
+  Storage::iterator right = obj->storage.end();
   while (left != right) {
     right--;
     if (left != right) {
@@ -114,7 +143,7 @@ Handle<Value> Vector::Remove(const Arguments& args) {
   ValueComparator comparator;
   for (int i = 0; i < args.Length(); i++) {
     Handle<Value> arg = args[i];
-    VectorStorage::iterator it = obj->storage.begin();
+    Storage::iterator it = obj->storage.begin();
     while (it != obj->storage.end()) {
       if (!comparator(*it, arg) && !comparator(arg, *it)) {
         it->Dispose();
@@ -147,7 +176,7 @@ Handle<Value> Vector::RemoveAt(const Arguments& args) {
     if (arg->IsUint32()) {
       uint32_t index = arg->Uint32Value() - removed;
       if (index < obj->storage.size()) {
-        VectorStorage::iterator it = obj->storage.begin() + index;
+        Storage::iterator it = obj->storage.begin() + index;
         it->Dispose();
         obj->storage.erase(it);
         removed++;
@@ -168,8 +197,8 @@ Handle<Value> Vector::RemoveRange(const Arguments& args) {
 
   HandleScope scope;
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  uint32_t start = args[0]->Uint32Value();
-  uint32_t end = args[1]->Uint32Value();
+  size_t start = args[0]->Uint32Value();
+  size_t end = args[1]->Uint32Value();
   if (end > obj->storage.size()) {
     end = obj->storage.size();
   }
@@ -177,7 +206,7 @@ Handle<Value> Vector::RemoveRange(const Arguments& args) {
     return args.This();
   }
 
-  VectorStorage::iterator it = obj->storage.begin() + start;
+  Storage::iterator it = obj->storage.begin() + start;
   while (it != obj->storage.begin() + end && it != obj->storage.end()) {
     (it++)->Dispose();
   }
@@ -213,10 +242,9 @@ Handle<Value> Vector::_Each(const Arguments& args) {
   Local<Function> function = Local<Function>::Cast(args[0]);
   TryCatch tryCatch;
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  Handle<Value> parameters[0];
-  Local<Object> modifierValue = VectorModifier::constructor->GetFunction()->NewInstance(0, parameters);
-  VectorStorage::iterator it = obj->storage.begin();
-  int i = 0;
+  Local<Object> modifierValue = VectorModifier::constructor->GetFunction()->NewInstance(0, NULL);
+  Storage::iterator it = obj->storage.begin();
+  size_t i = 0;
   bool isFirst = true;
   while (it != obj->storage.end()) {
     Persistent<Value> value = *it;
@@ -225,7 +253,10 @@ Handle<Value> Vector::_Each(const Arguments& args) {
     modifier->isLast = it + 1 == obj->storage.end();
     modifier->index = i;
     isFirst = false;
-    Handle<Value> result = function->Call(global, 2, (Handle<Value>[]){value, modifierValue});
+    Handle<Value> parameters[2];
+    parameters[0] = value;
+    parameters[1] = modifierValue;
+    Handle<Value> result = function->Call(global, 2, parameters);
     if (result.IsEmpty()) {
       modifier->clear(true);
       return ThrowException(tryCatch.Exception());
@@ -273,10 +304,11 @@ Handle<Value> Vector::_Map(const Arguments& args) {
   Local<Function> function = Local<Function>::Cast(args[0]);
   TryCatch tryCatch;
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  VectorStorage::iterator it = obj->storage.begin();
+  Storage::iterator it = obj->storage.begin();
   while (it != obj->storage.end()) {
-    Persistent<Value> value = *it;
-    Handle<Value> result = function->Call(global, 1, (Handle<Value>[]){value});
+    Persistent<Value> parameters[1];
+    parameters[0] = *it;
+    Handle<Value> result = function->Call(global, 1, parameters);
     if (result.IsEmpty()) {
       return ThrowException(tryCatch.Exception());
     }
@@ -301,10 +333,12 @@ Handle<Value> Vector::_Reduce(const Arguments& args) {
   TryCatch tryCatch;
   Handle<Value> memo = args[1];
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  VectorStorage::iterator it = obj->storage.begin();
+  Storage::iterator it = obj->storage.begin();
   while (it != obj->storage.end()) {
-    Persistent<Value> value = *it++;
-    memo = function->Call(global, 2, (Handle<Value>[]){memo, value});
+    Handle<Value> parameters[2];
+    parameters[0] = memo;
+    parameters[1] = *it++;
+    memo = function->Call(global, 2, parameters);
     if (memo.IsEmpty()) {
       return ThrowException(tryCatch.Exception());
     }
@@ -327,10 +361,12 @@ Handle<Value> Vector::_ReduceRight(const Arguments& args) {
   TryCatch tryCatch;
   Handle<Value> memo = args[1];
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  VectorStorage::iterator it = obj->storage.end();
+  Storage::iterator it = obj->storage.end();
   while (it != obj->storage.begin()) {
-    Persistent<Value> value = *--it;
-    memo = function->Call(global, 2, (Handle<Value>[]){memo, value});
+    Handle<Value> parameters[2];
+    parameters[0] = memo;
+    parameters[1] = *--it;
+    memo = function->Call(global, 2, parameters);
     if (memo.IsEmpty()) {
       return ThrowException(tryCatch.Exception());
     }
@@ -352,14 +388,15 @@ Handle<Value> Vector::_Find(const Arguments& args) {
   Local<Function> function = Local<Function>::Cast(args[0]);
   TryCatch tryCatch;
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  VectorStorage::iterator it = obj->storage.begin();
+  Storage::iterator it = obj->storage.begin();
   while (it != obj->storage.end()) {
-    Persistent<Value> value = *it++;
-    Handle<Value> result = function->Call(global, 1, (Handle<Value>[]){value});
+    Persistent<Value> parameters[1];
+    parameters[0] = *it++;
+    Handle<Value> result = function->Call(global, 1, parameters);
     if (result.IsEmpty()) {
       return ThrowException(tryCatch.Exception());
     } else if (result->IsTrue()) {
-      return value;
+      return parameters[0];
     }
   }
   return Undefined();
@@ -380,15 +417,16 @@ Handle<Value> Vector::_Filter(const Arguments& args) {
   TryCatch tryCatch;
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
   Local<Array> array = Array::New();
-  VectorStorage::iterator it = obj->storage.begin();
+  Storage::iterator it = obj->storage.begin();
   int i = 0;
   while (it != obj->storage.end()) {
-    Persistent<Value> value = *it++;
-    Handle<Value> result = function->Call(global, 1, (Handle<Value>[]){value});
+    Persistent<Value> parameters[1];
+    parameters[0] = *it++;
+    Handle<Value> result = function->Call(global, 1, parameters);
     if (result.IsEmpty()) {
       return ThrowException(tryCatch.Exception());
     } else if (result->IsTrue()) {
-      array->Set(i++, Local<Value>::New(value));
+      array->Set(i++, Local<Value>::New(parameters[0]));
     }
   }
   return scope.Close(array);
@@ -414,7 +452,7 @@ void VectorModifier::Init(Handle<Object> exports) {
 void VectorModifier::clear(bool dispose) {
   if (dispose) {
     replace.Dispose();
-    VectorStorage::iterator it = insertedBefore.begin();
+    Storage::iterator it = insertedBefore.begin();
     while (it != insertedBefore.end()) {
       (it++)->Dispose();
     }
@@ -478,7 +516,7 @@ Handle<Value> VectorModifier::Index(const Arguments& args) {
 
   HandleScope scope;
   VectorModifier* obj = ObjectWrap::Unwrap<VectorModifier>(args.This());
-  return scope.Close(Uint32::New(obj->index));
+  return scope.Close(Uint32::New((uint32_t) obj->index));
 }
 
 Handle<Value> VectorModifier::Set(const Arguments& args) {

@@ -55,12 +55,14 @@ bool ValueComparator::operator()(const Handle<Value>& value1, const Handle<Value
     int len1 = s1->Utf8Length();
     int len2 = s2->Utf8Length();
     int min = len1 < len2 ? len1 : len2;
-    char buffer1[min + 1];
-    char buffer2[min + 1];
+    char* buffer1 = new char[min + 1];
+    char* buffer2 = new char[min + 1];
     s1->WriteUtf8(buffer1, min);
     s2->WriteUtf8(buffer2, min);
     buffer1[min] = buffer2[min] = '\0';
     int result = strcmp(buffer1, buffer2);
+    delete []buffer1;
+    delete []buffer2;
     return result < 0 || (result == 0 && len1 < len2);
   }
 
@@ -182,6 +184,10 @@ template <class Storage> Handle<Value> Collection<Storage>::Iterate(Handle<Value
   return result;
 }
 
+template <class Storage> Handle<Value> Collection<Storage>::New(const Arguments& args) {
+  return ThrowException(Exception::Error(String::New("Cannot create instance of this type.")));
+}
+
 template <class Storage> bool Collection<Storage>::operator<(const Collection<Storage>& other) const {
   ValueComparator comparator;
   typename Storage::const_iterator it1 = storage.begin();
@@ -211,13 +217,13 @@ template <class Storage> Handle<Value> Collection<Storage>::Size(const Arguments
 
   HandleScope scope;
   Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
-  return scope.Close(Number::New(obj->storage.size()));
+  return scope.Close(Uint32::New((uint32_t) obj->storage.size()));
 }
 
 template <class Storage> Handle<Value> Collection<Storage>::ToArray(const Arguments& args) {
   HandleScope scope;
   Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
-  Local<Array> array = Array::New(obj->storage.size());
+  Local<Array> array = Array::New((uint32_t) obj->storage.size());
   typename Storage::iterator it = obj->storage.begin();
   for (uint32_t i = 0; it != obj->storage.end(); it++, i++) {
     array->Set(i, Local<Value>::New(*it));
@@ -244,10 +250,11 @@ template <class Storage> Handle<Value> Collection<Storage>::Equals(const Argumen
     typename Storage::iterator it1 = obj1->storage.begin();
     Collection<Storage>* obj2 = ObjectWrap::Unwrap< Collection<Storage> >(Handle<Object>::Cast(args[0]));
     typename Storage::iterator it2 = obj2->storage.begin();
+    ValueComparator comparator;
     while (it1 != obj1->storage.end() && it2 != obj2->storage.end()) {
       Persistent<Value> v1 = *it1++;
       Persistent<Value> v2 = *it2++;
-      if (!v1->Equals(v2)) {
+      if (comparator(v1, v2) || comparator(v2, v1)) {
         return scope.Close(Boolean::New(false));
       }
     }
@@ -264,7 +271,7 @@ template <class Storage> Handle<Value> Collection<Storage>::Equals(const Argumen
 template <class Storage> Handle<Value> Collection<Storage>::Add(const Arguments& args) {
   CHECK_ITERATING("add", args);
   if (args.Length() == 0) {
-    return ThrowException(Exception::Error(String::New("add(value) takes at least one argument.")));
+    return ThrowException(Exception::Error(String::New("add(value, ...) takes at least one argument.")));
   }
 
   HandleScope scope;

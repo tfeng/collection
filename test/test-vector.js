@@ -83,8 +83,7 @@ describe('Vector', function(){
 
       v2.add(newVector);
       array2.push(new Vector(newVector));
-      // BE AWARE: Two distinct vectors are never equal using JS ==. vector.equals() is not deep equal.
-      assert(!v2.equals(new Vector(array2)));
+      assert(v2.equals(new Vector(array2)));
     });
 
     it("should throw error if not exactly one argument is provided", function() {
@@ -142,6 +141,37 @@ describe('Vector', function(){
       assert.deepEqual(v1.get(1, 3, 5, 7, 9), [2,4,6,8,10]);
       assert.deepEqual(v1.get(undefined), []);
       assert.deepEqual(v1.get(1, undefined, 3, undefined, 5, null, 7, null, 9, 999), [2,4,6,8,10]);
+    });
+  });
+
+  describe("#clear", function() {
+    it("should erase all the elements in the vectors", function() {
+      assert.deepEqual(v1.clear().toArray(), []);
+      assert.deepEqual(v2.clear().toArray(), []);
+      assert.deepEqual(v3.clear().toArray(), []);
+      assert.deepEqual(v1.toArray(), []);
+      assert.deepEqual(v2.toArray(), []);
+      assert.deepEqual(v3.toArray(), []);
+    });
+
+    it("should throw error if argument is provided", function() {
+      assert.throws(function() {
+        v1.clear(1);
+      }, Error);
+    });
+  });
+
+  describe("#index", function() {
+    it("should return indexes of elements in the vectors", function() {
+      for (var i = 0; i < v1.size(); i++) {
+        assert.equal(v1.index(i + 1), i);
+      }
+      for (var i = 0; i < v2.size(); i++) {
+        assert.equal(v2.index(array2[i]), i);
+      }
+      for (var i = 0; i < v3.size(); i++) {
+        assert.equal(v3.index(array3[i]), i);
+      }
     });
   });
 
@@ -265,23 +295,6 @@ describe('Vector', function(){
       }, Error);
       assert.throws(function() {
         v1.removeLast([]);
-      }, Error);
-    });
-  });
-
-  describe("#clear", function() {
-    it("should erase all the elements in the vectors", function() {
-      assert.deepEqual(v1.clear().toArray(), []);
-      assert.deepEqual(v2.clear().toArray(), []);
-      assert.deepEqual(v3.clear().toArray(), []);
-      assert.deepEqual(v1.toArray(), []);
-      assert.deepEqual(v2.toArray(), []);
-      assert.deepEqual(v3.toArray(), []);
-    });
-
-    it("should throw error if argument is provided", function() {
-      assert.throws(function() {
-        v1.clear(1);
       }, Error);
     });
   });

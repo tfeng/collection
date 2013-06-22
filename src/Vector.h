@@ -28,6 +28,8 @@ class Vector : public Collection<VectorStorage> {
   private:
     static Handle<Value> New(const Arguments& args);
 
+    static Handle<Value> Index(const Arguments& args);
+
     static Handle<Value> Set(const Arguments& args);
     static Handle<Value> Reverse(const Arguments& args);
     static Handle<Value> Remove(const Arguments& args);
@@ -82,7 +84,7 @@ class VectorModifier : public ObjectWrap {
 
     bool isFirst;
     bool isLast;
-    uint32_t index;
+    size_t index;
     Persistent<Value> replace;
     bool removed;
     VectorStorage insertedBefore;

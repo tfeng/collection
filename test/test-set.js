@@ -83,8 +83,7 @@ describe('Set', function(){
 
       s2.add(newSet);
       array2.push(new Set(newSet));
-      // BE AWARE: Two distinct sets are never equal using JS ==. set.equals() is not deep equal.
-      assert(!s2.equals(new Set(array2)));
+      assert(s2.equals(new Set(array2)));
     });
 
     it("should throw error if not exactly one argument is provided", function() {
@@ -183,6 +182,73 @@ describe('Set', function(){
     it("should throw error if argument is provided", function() {
       assert.throws(function() {
         s1.clear(1);
+      }, Error);
+    });
+  });
+
+  describe("#each", function() {
+    it("should go through all the elements in the sets", function() {
+      var i1 = 0;
+      s1.each(function(v) {
+        assert.equal(v, array1[i1++]);
+      });
+
+      var i2 = 0;
+      s2.each(function(v) {
+        assert.equal(v, array2[i2++]);
+      });
+
+      var i3 = 0;
+      s3.each(function(v) {
+        assert.equal(v, array3[i3++]);
+      });
+    });
+
+    it("should tolerate errors in the callback function", function() {
+      assert.throws(function() {
+        s1.each(function() {
+          notExisting == 1;
+        });
+      }, Error);
+
+      assert.throws(function() {
+        s1.each(function() {
+          throw new Error();
+        });
+      }, Error);
+
+      assert.throws(function() {
+        s1.each(function(v) {
+          v.doesNotExist();
+        });
+      }, Error);
+    });
+
+    it("should not allow state-changing functions to be invoked during iteration", function() {
+      assert.throws(function() {
+        v1.each(function() {
+          v1.add(1);
+        });
+      }, Error);
+      assert.throws(function() {
+        v1.each(function() {
+          v1.addAll([1]);
+        });
+      }, Error);
+      assert.throws(function() {
+        v1.each(function() {
+          v1.clear();
+        });
+      }, Error);
+      assert.throws(function() {
+        v1.each(function() {
+          v1.set(0, 0);
+        });
+      }, Error);
+      assert.throws(function() {
+        v1.each(function() {
+          v1.remove(1);
+        });
       }, Error);
     });
   });

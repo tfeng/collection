@@ -13,7 +13,7 @@ typedef SetStorage Storage;
 void Set::Init(Handle<Object> exports) {
   HandleScope scope;
 
-  constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(Set::New));
+  constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(New));
   constructor->InstanceTemplate()->SetInternalFieldCount(1); // for constructors
   constructor->SetClassName(String::NewSymbol("Set"));
 
@@ -21,9 +21,11 @@ void Set::Init(Handle<Object> exports) {
 }
 
 void Set::InitializeFields(Handle<Object> thisObject) {
-  Collection<SetStorage>::InitializeFields(thisObject);
+  Collection<Storage>::InitializeFields(thisObject);
 
   thisObject->Set(String::NewSymbol("remove"), FunctionTemplate::New(Remove)->GetFunction());
+
+  thisObject->Set(String::NewSymbol("each"), FunctionTemplate::New(Each)->GetFunction());
 }
 
 Handle<Value> Set::New(const Arguments& args) {
@@ -63,9 +65,38 @@ Handle<Value> Set::Remove(const Arguments& args) {
   Set* obj = ObjectWrap::Unwrap<Set>(args.This());
   for (int i = 0; i < args.Length(); i++) {
     Handle<Value> arg = args[i];
-    SetStorage::iterator it = obj->storage.find((Persistent<Value>) arg);
+    Storage::const_iterator it = obj->storage.find((Persistent<Value>) arg);
     if (it != obj->storage.end()) {
       obj->storage.erase(it);
+    }
+  }
+  return args.This();
+}
+
+Handle<Value> Set::Each(const Arguments& args) {
+  return ObjectWrap::Unwrap<Set>(args.This())->Iterate(_Each, args);
+}
+
+Handle<Value> Set::_Each(const Arguments& args) {
+  if (args.Length() != 1 || !(args[0]->IsFunction())) {
+    return ThrowException(Exception::Error(String::New("each(function) takes a function argument.")));
+  }
+
+  HandleScope scope;
+  Local<Object> global = Context::GetCurrent()->Global();
+  Local<Function> function = Local<Function>::Cast(args[0]);
+  TryCatch tryCatch;
+  Set* obj = ObjectWrap::Unwrap<Set>(args.This());
+  Storage::const_iterator it = obj->storage.begin();
+  while (it != obj->storage.end()) {
+    Persistent<Value> parameters[1];
+    parameters[0] = *it++;
+    Handle<Value> result = function->Call(global, 2, parameters);
+    if (result.IsEmpty()) {
+      return ThrowException(tryCatch.Exception());
+    }
+    if (result->IsFalse()) {
+      break;
     }
   }
   return args.This();

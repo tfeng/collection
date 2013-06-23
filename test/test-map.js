@@ -33,6 +33,27 @@ describe('Set', function() {
     });
   });
 
+  describe("#has", function() {
+    it("should return existence of values in a set", function() {
+      assert(m1.has(1));
+      assert(m1.has(3));
+      assert(!m1.has(11));
+      assert(m2.has(1));
+      assert(!m2.has("a"));
+      assert(!m2.has("x"));
+      assert(m3.has("x"));
+      assert(m3.has("y"));
+      assert(m1.has(1, 2, 11), [true, true, false]);
+      assert(m3.has("a", "b", "c", "x", "y", "z"), [false, false, false, true, true, true]);
+    });
+
+    it("should throw error if no argument is provided", function() {
+      assert.throws(function() {
+        m1.has();
+      }, Error);
+    });
+  });
+
   describe("#isEmpty", function() {
     it("should return whether a map is empty", function() {
       assert.equal(m1.isEmpty(), false);
@@ -101,7 +122,7 @@ describe('Set', function() {
       });
 
       // For non-existing keys, undefined should be returned.
-      assert.deepEqual(m3.get("x", "y", "z", "a", "b", "c"), ["a", "b", "c", undefined, undefined, undefined]);
+      assert.deepEqual(m3.get("x", "y", "z", "a", "b", "c"), ["a", "b", "c"]);
     });
   });
 

@@ -31,6 +31,23 @@ describe('Set', function() {
     });
   });
 
+  describe("#has", function() {
+    it("should return existence of values in a set", function() {
+      assert(s1.has(1));
+      assert(s1.has(3));
+      assert(!s1.has(11));
+      assert(!s2.has(1));
+      assert(s2.has("abc"));
+      assert(s1.has(1, 2, 11), [true, true, false]);
+    });
+
+    it("should throw error if no argument is provided", function() {
+      assert.throws(function() {
+        s1.has();
+      }, Error);
+    });
+  });
+
   describe("#isEmpty", function() {
     it("should return whether a set is empty", function() {
       assert.equal(s1.isEmpty(), false);
@@ -150,8 +167,14 @@ describe('Set', function() {
     it("should get multiple elements from a set at a time", function() {
       assert.deepEqual(s1.get(0, 1, 2, 3), [1,2,3,4]);
       assert.deepEqual(s1.get(1, 3, 5, 7, 9), [2,4,6,8,10]);
-      assert.deepEqual(s1.get(undefined), []);
-      assert.deepEqual(s1.get(1, undefined, 3, undefined, 5, null, 7, null, 9, 999), [2,4,6,8,10]);
+      assert.deepEqual(s1.get(undefined), undefined);
+      var array = [];
+      array[0] = 2;
+      array[2] = 4;
+      array[4] = 6;
+      array[6] = 8;
+      array[8] = 10;
+      assert.deepEqual(s1.get(1, undefined, 3, undefined, 5, null, 7, null, 9, 999), array);
     });
   });
 

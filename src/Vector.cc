@@ -6,6 +6,23 @@ using namespace v8;
 
 
 /*
+ * class InternalVector
+ */
+
+template <class T, class Comparator, class Alloc>
+typename vector<T, Alloc>::const_iterator InternalVector<T, Comparator, Alloc>::find(const T& value) const {
+  Comparator comparator;
+  typename vector<T, Alloc>::const_iterator it = vector<T, Alloc>::begin();
+  while (it != vector<T, Alloc>::end()) {
+    if (!comparator(*it, value) && !comparator(value, *it)) {
+      break;
+    }
+    it++;
+  }
+  return it;
+}
+
+/*
  * class Vector
  */
 
@@ -574,3 +591,6 @@ Handle<Value> VectorModifier::InsertAfter(const Arguments& args) {
   }
   return args.This();
 }
+
+
+template class InternalVector<Persistent<Value>, ValueComparator>;

@@ -79,6 +79,7 @@ template <class Storage> class Collection : public ObjectWrap  {
   private:
     static Handle<Value> New(const Arguments& args);
 
+    static Handle<Value> Has(const Arguments& args);
     static Handle<Value> IsEmpty(const Arguments& args);
     static Handle<Value> Size(const Arguments& args);
     static Handle<Value> Equals(const Arguments& args);

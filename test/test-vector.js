@@ -31,11 +31,34 @@ describe('Vector', function() {
     });
   });
 
+  describe("#has", function() {
+    it("should return existence of values in a vector", function() {
+      assert(v1.has(1));
+      assert(v1.has(3));
+      assert(!v1.has(11));
+      assert(!v2.has(1));
+      assert(v2.has("abc"));
+      assert(v1.has(1, 2, 11), [true, true, false]);
+    });
+
+    it("should throw error if no argument is provided", function() {
+      assert.throws(function() {
+        v1.has();
+      }, Error);
+    });
+  });
+
   describe("#isEmpty", function() {
     it("should return whether a vector is empty", function() {
       assert.equal(v1.isEmpty(), false);
       assert.equal(v2.isEmpty(), false);
       assert.equal(v3.isEmpty(), true);
+    });
+
+    it("should throw error if argument is provided", function() {
+      assert.throws(function() {
+        v1.isEmpty("abc");
+      }, Error);
     });
   });
 
@@ -57,12 +80,6 @@ describe('Vector', function() {
       assert.equal(v2.toString(), array2.toString());
       assert.equal(v3.toString(), array3.toString());
       assert.equal(new Vector(v2).toString(), array2.toString());
-    });
-
-    it("should throw error if argument is provided", function() {
-      assert.throws(function() {
-        v2.toString("abc");
-      }, Error);
     });
   });
 
@@ -139,8 +156,14 @@ describe('Vector', function() {
     it("should get multiple elements from a vector at a time", function() {
       assert.deepEqual(v1.get(0, 1, 2, 3), [1,2,3,4]);
       assert.deepEqual(v1.get(1, 3, 5, 7, 9), [2,4,6,8,10]);
-      assert.deepEqual(v1.get(undefined), []);
-      assert.deepEqual(v1.get(1, undefined, 3, undefined, 5, null, 7, null, 9, 999), [2,4,6,8,10]);
+      assert.deepEqual(v1.get(undefined), undefined);
+      var array = [];
+      array[0] = 2;
+      array[2] = 4;
+      array[4] = 6;
+      array[6] = 8;
+      array[8] = 10;
+      assert.deepEqual(v1.get(1, undefined, 3, undefined, 5, null, 7, null, 9, 999), array);
     });
   });
 

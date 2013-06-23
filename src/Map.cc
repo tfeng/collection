@@ -34,7 +34,6 @@ void Map::InitializeFields(Handle<Object> thisObject) {
   thisObject->Set(String::NewSymbol("toString"), FunctionTemplate::New(ToString)->GetFunction());
 
   thisObject->Set(String::NewSymbol("get"), FunctionTemplate::New(Get)->GetFunction());
-  thisObject->Set(String::NewSymbol("has"), FunctionTemplate::New(Has)->GetFunction());
   thisObject->Set(String::NewSymbol("remove"), FunctionTemplate::New(Remove)->GetFunction());
   thisObject->Set(String::NewSymbol("set"), FunctionTemplate::New(Set)->GetFunction());
   thisObject->Set(String::NewSymbol("setAll"), FunctionTemplate::New(SetAll)->GetFunction());
@@ -144,36 +143,13 @@ Handle<Value> Map::Get(const Arguments& args) {
     for (int i = 0; i < args.Length(); i++) {
       Handle<Value> arg = args[i];
       Storage::iterator it = obj->storage.find((Persistent<Value>) arg);
-      if (it == obj->storage.end()) {
-        array->Set(i, Undefined());
-      } else {
+      if (it != obj->storage.end()) {
         array->Set(i, Local<Value>::New(it->second));
       }
     }
     return scope.Close(array);
   }
   return Undefined();
-}
-
-Handle<Value> Map::Has(const Arguments& args) {
-  if (args.Length() == 0) {
-    return ThrowException(Exception::Error(String::New("has(key, ...) takes at least one argument.")));
-  }
-
-  HandleScope scope;
-  Map* obj = ObjectWrap::Unwrap<Map>(args.This());
-  if (args.Length() == 1) {
-    Storage::iterator it = obj->storage.find((Persistent<Value>) args[0]);
-    return scope.Close(Boolean::New(it != obj->storage.end()));
-  } else {
-    Handle<Array> array = Array::New();
-    for (int i = 0; i < args.Length(); i++) {
-      Handle<Value> arg = args[i];
-      Storage::iterator it = obj->storage.find((Persistent<Value>) arg);
-      array->Set(i, Boolean::New(it != obj->storage.end()));
-    }
-    return scope.Close(array);
-  }
 }
 
 Handle<Value> Map::Remove(const Arguments& args) {

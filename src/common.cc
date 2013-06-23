@@ -162,6 +162,7 @@ template <class Storage> Collection<Storage>::~Collection() {
 }
 
 template <class Storage> void Collection<Storage>::InitializeFields(Handle<Object> thisObject) {
+  thisObject->Set(String::NewSymbol("has"), FunctionTemplate::New(Has)->GetFunction());
   thisObject->Set(String::NewSymbol("isEmpty"), FunctionTemplate::New(IsEmpty)->GetFunction());
   thisObject->Set(String::NewSymbol("size"), FunctionTemplate::New(Size)->GetFunction());
   thisObject->Set(String::NewSymbol("equals"), FunctionTemplate::New(Equals)->GetFunction());
@@ -200,6 +201,27 @@ template <class Storage> bool Collection<Storage>::operator<(const Collection<St
     }
   }
   return it1 == storage.end() && it2 != other.storage.end();
+}
+
+template <class Storage> Handle<Value> Collection<Storage>::Has(const Arguments& args) {
+  if (args.Length() == 0) {
+    return ThrowException(Exception::Error(String::New("has(value, ...) takes at least one argument.")));
+  }
+
+  HandleScope scope;
+  Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
+  if (args.Length() == 1) {
+    typename Storage::const_iterator it = obj->storage.find((Persistent<Value>) args[0]);
+    return scope.Close(Boolean::New(it != obj->storage.end()));
+  } else {
+    Handle<Array> array = Array::New();
+    for (int i = 0; i < args.Length(); i++) {
+      Handle<Value> arg = args[i];
+      typename Storage::const_iterator it = obj->storage.find((Persistent<Value>) arg);
+      array->Set(i, Boolean::New(it != obj->storage.end()));
+    }
+    return scope.Close(array);
+  }
 }
 
 template <class Storage> Handle<Value> Collection<Storage>::IsEmpty(const Arguments& args) {
@@ -453,23 +475,25 @@ template <class Storage> Handle<Value> IndexedCollection<Storage>::Get(const Arg
 
   HandleScope scope;
   IndexedCollection<Storage>* obj = ObjectWrap::Unwrap< IndexedCollection<Storage> >(args.This());
-  if (args.Length() == 1 && args[0]->IsUint32()) {
-    uint32_t index = args[0]->Uint32Value();
-    if (index < obj->storage.size()) {
-      typename Storage::const_iterator it = obj->storage.begin();
-      advance(it, index);
-      return scope.Close(Local<Value>::New(*it));
+  if (args.Length() == 1) {
+    if (args[0]->IsUint32()) {
+      uint32_t index = args[0]->Uint32Value();
+      if (index < obj->storage.size()) {
+        typename Storage::const_iterator it = obj->storage.begin();
+        advance(it, index);
+        return scope.Close(Local<Value>::New(*it));
+      }
     }
   } else {
     Handle<Array> array = Array::New();
-    for (int i = 0, j = 0; i < args.Length(); i++) {
+    for (int i = 0; i < args.Length(); i++) {
       Handle<Value> arg = args[i];
       if (arg->IsUint32()) {
         uint32_t index = arg->Uint32Value();
         if (index < obj->storage.size()) {
           typename Storage::const_iterator it = obj->storage.begin();
           advance(it, index);
-          array->Set(j++, Local<Value>::New(*it));
+          array->Set(i, Local<Value>::New(*it));
         }
       }
     }

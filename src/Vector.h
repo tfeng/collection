@@ -13,12 +13,21 @@ class VectorModifier;
 
 
 /*
+ * class InternalVector
+ */
+
+template < class T, class Comparator, class Alloc = allocator<T> > class InternalVector : public vector<T, Alloc> {
+  public:
+    typename vector<T, Alloc>::const_iterator find(const T& value) const;
+};
+
+/*
  * class Vector
  */
 
-class Vector : public IndexedCollection< vector< Persistent<Value> > > {
+class Vector : public IndexedCollection< InternalVector<Persistent<Value>, ValueComparator> > {
   public:
-    typedef vector< Persistent<Value> > Storage;
+    typedef InternalVector<Persistent<Value>, ValueComparator> Storage;
 
     virtual Handle<Value> GetValue(const Storage::value_type& value) const;
 

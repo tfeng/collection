@@ -1,8 +1,8 @@
 {
-  "name": "collection",
+  "name": "collection.js",
   "id": "collection",
-  "version": "0.1.0",
-  "description": "An efficient native implementation of collection data types for Node.JS",
+  "version": "0.1.1",
+  "description": "Node.js cross-platform native collection library",
   "keywords": [
     "collection",
     "native",

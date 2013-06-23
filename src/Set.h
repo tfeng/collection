@@ -13,10 +13,12 @@ using namespace v8;
  * class Set
  */
 
-typedef set<Persistent<Value>, ValueComparator> SetStorage;
-
-class Set : public Collection<SetStorage> {
+class Set : public IndexedCollection< set<Persistent<Value>, ValueComparator> > {
   public:
+    typedef set<Persistent<Value>, ValueComparator> Storage;
+
+    virtual Handle<Value> GetValue(const Storage::value_type& value) const;
+
     static void Init(Handle<Object> exports);
 
   protected:

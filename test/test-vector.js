@@ -1,9 +1,9 @@
 "use strict";
 
 var assert = require("assert"),
-    Vector = require("../lib/collection").Vector
+    Vector = require("../lib/collection").Vector;
 
-describe('Vector', function(){
+describe('Vector', function() {
   var array1, array2, array3;
   var v1, v2, v3;
 

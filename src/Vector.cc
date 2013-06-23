@@ -4,12 +4,15 @@
 using namespace std;
 using namespace v8;
 
-typedef VectorStorage Storage;
-
 
 /*
  * class Vector
  */
+
+Handle<Value> Vector::GetValue(const Persistent<Value>& value) const {
+  HandleScope scope;
+  return scope.Close(Local<Value>::New(value));
+}
 
 void Vector::Init(Handle<Object> exports) {
   HandleScope scope;
@@ -22,7 +25,7 @@ void Vector::Init(Handle<Object> exports) {
 }
 
 void Vector::InitializeFields(Handle<Object> thisObject) {
-  Collection<Storage>::InitializeFields(thisObject);
+  IndexedCollection<Storage>::InitializeFields(thisObject);
 
   thisObject->Set(String::NewSymbol("index"), FunctionTemplate::New(Index)->GetFunction());
 
@@ -45,21 +48,22 @@ Handle<Value> Vector::New(const Arguments& args) {
   if (!args.IsConstructCall()) {
     return ThrowException(Exception::Error(String::New("Use the new operator to create instances of this object.")));
   }
+  Vector* obj = new Vector();
   bool argError = true;
   if (args.Length() <= 1) {
     if (args[0]->IsUndefined()) {
       argError = false;
     } else if (args[0]->IsArray()) {
       argError = false;
-    } else if (CollectionUtil::IsSupportedObject(args[0])) {
+    } else if (obj->IsSupportedObject(args[0])) {
       argError = false;
     }
   }
   if (argError) {
+    delete obj;
     return ThrowException(Exception::Error(String::New("Argument must be an array, an object, or omitted.")));
   }
 
-  Vector* obj = new Vector();
   obj->Wrap(args.This());
 
   obj->InitializeFields(args.This());
@@ -96,7 +100,7 @@ Handle<Value> Vector::Index(const Arguments& args) {
 }
 
 Handle<Value> Vector::Set(const Arguments& args) {
-  CHECK_ITERATING("set", args);
+  CHECK_ITERATING(set, args);
   if (args.Length() != 2 || !(args[0]->IsUint32())) {
     return ThrowException(Exception::Error(String::New("set(index, value) takes an integer index and a value.")));
   }
@@ -115,8 +119,8 @@ Handle<Value> Vector::Set(const Arguments& args) {
 }
 
 Handle<Value> Vector::Reverse(const Arguments& args) {
-  CHECK_ITERATING("reverse", args);
-  CHECK_DOES_NOT_TAKE_ARGUMENT("reverse", args);
+  CHECK_ITERATING(reverse, args);
+  CHECK_DOES_NOT_TAKE_ARGUMENT(reverse, args);
 
   HandleScope scope;
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
@@ -133,7 +137,7 @@ Handle<Value> Vector::Reverse(const Arguments& args) {
 }
 
 Handle<Value> Vector::Remove(const Arguments& args) {
-  CHECK_ITERATING("remove", args);
+  CHECK_ITERATING(remove, args);
   if (args.Length() == 0) {
     return ThrowException(Exception::Error(String::New("remove(value, ...) takes at least one argument.")));
   }
@@ -158,7 +162,7 @@ Handle<Value> Vector::Remove(const Arguments& args) {
 }
 
 Handle<Value> Vector::RemoveAt(const Arguments& args) {
-  CHECK_ITERATING("removeAt", args);
+  CHECK_ITERATING(removeAt, args);
   if (args.Length() == 0) {
     return ThrowException(Exception::Error(String::New("removeAt(index, ...) takes at least one argument.")));
   }
@@ -187,7 +191,7 @@ Handle<Value> Vector::RemoveAt(const Arguments& args) {
 }
 
 Handle<Value> Vector::RemoveRange(const Arguments& args) {
-  CHECK_ITERATING("removeRange", args);
+  CHECK_ITERATING(removeRange, args);
   if (args.Length() != 2) {
     return ThrowException(Exception::Error(String::New("removeRange(start, end) takes two arguments.")));
   }
@@ -216,8 +220,8 @@ Handle<Value> Vector::RemoveRange(const Arguments& args) {
 }
 
 Handle<Value> Vector::RemoveLast(const Arguments& args) {
-  CHECK_ITERATING("removeLast", args);
-  CHECK_DOES_NOT_TAKE_ARGUMENT("removeLast", args);
+  CHECK_ITERATING(removeLast, args);
+  CHECK_DOES_NOT_TAKE_ARGUMENT(removeLast, args);
 
   HandleScope scope;
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
@@ -452,7 +456,7 @@ void VectorModifier::Init(Handle<Object> exports) {
 void VectorModifier::clear(bool dispose) {
   if (dispose) {
     replace.Dispose();
-    Storage::iterator it = insertedBefore.begin();
+    Vector::Storage::iterator it = insertedBefore.begin();
     while (it != insertedBefore.end()) {
       (it++)->Dispose();
     }
@@ -473,6 +477,7 @@ VectorModifier::VectorModifier() {
 }
 
 VectorModifier::~VectorModifier() {
+  // Do not dispose the persistent handles, because they are being used by the vector.
 }
 
 Handle<Value> VectorModifier::New(const Arguments& args) {
@@ -496,7 +501,7 @@ Handle<Value> VectorModifier::New(const Arguments& args) {
 }
 
 Handle<Value> VectorModifier::IsFirst(const Arguments& args) {
-  CHECK_DOES_NOT_TAKE_ARGUMENT("isFirst", args);
+  CHECK_DOES_NOT_TAKE_ARGUMENT(isFirst, args);
 
   HandleScope scope;
   VectorModifier* obj = ObjectWrap::Unwrap<VectorModifier>(args.This());
@@ -504,7 +509,7 @@ Handle<Value> VectorModifier::IsFirst(const Arguments& args) {
 }
 
 Handle<Value> VectorModifier::IsLast(const Arguments& args) {
-  CHECK_DOES_NOT_TAKE_ARGUMENT("isLast", args);
+  CHECK_DOES_NOT_TAKE_ARGUMENT(isLast, args);
 
   HandleScope scope;
   VectorModifier* obj = ObjectWrap::Unwrap<VectorModifier>(args.This());
@@ -512,7 +517,7 @@ Handle<Value> VectorModifier::IsLast(const Arguments& args) {
 }
 
 Handle<Value> VectorModifier::Index(const Arguments& args) {
-  CHECK_DOES_NOT_TAKE_ARGUMENT("index", args);
+  CHECK_DOES_NOT_TAKE_ARGUMENT(index, args);
 
   HandleScope scope;
   VectorModifier* obj = ObjectWrap::Unwrap<VectorModifier>(args.This());
@@ -532,7 +537,7 @@ Handle<Value> VectorModifier::Set(const Arguments& args) {
 }
 
 Handle<Value> VectorModifier::Remove(const Arguments& args) {
-  CHECK_DOES_NOT_TAKE_ARGUMENT("remove", args);
+  CHECK_DOES_NOT_TAKE_ARGUMENT(remove, args);
 
   HandleScope scope;
   VectorModifier* obj = ObjectWrap::Unwrap<VectorModifier>(args.This());

@@ -16,10 +16,12 @@ class VectorModifier;
  * class Vector
  */
 
-typedef vector< Persistent<Value> > VectorStorage;
-
-class Vector : public Collection<VectorStorage> {
+class Vector : public IndexedCollection< vector< Persistent<Value> > > {
   public:
+    typedef vector< Persistent<Value> > Storage;
+
+    virtual Handle<Value> GetValue(const Storage::value_type& value) const;
+
     static void Init(Handle<Object> exports);
 
   protected:
@@ -69,7 +71,7 @@ class VectorModifier : public ObjectWrap {
 
   private:
     VectorModifier();
-    ~VectorModifier();
+    virtual ~VectorModifier();
 
     static Handle<Value> New(const Arguments& args);
 
@@ -87,8 +89,8 @@ class VectorModifier : public ObjectWrap {
     size_t index;
     Persistent<Value> replace;
     bool removed;
-    VectorStorage insertedBefore;
-    VectorStorage insertedAfter;
+    Vector::Storage insertedBefore;
+    Vector::Storage insertedAfter;
 
     friend class Vector;
 };

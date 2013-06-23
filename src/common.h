@@ -5,6 +5,7 @@
 #include <node.h>
 
 using namespace node;
+using namespace std;
 using namespace v8;
 
 class CollectionUtil;
@@ -36,6 +37,9 @@ do { \
 class ValueComparator {
   public:
     bool operator()(const Handle<Value>& value1, const Handle<Value>& value2) const;
+    bool operator()(const pair< Handle<Value>, Handle<Value> >& pair1, const pair< Handle<Value>, Handle<Value> >& pair2) const;
+    bool Equals(const Handle<Value>& value1, const Handle<Value>& value2) const;
+    bool Equals(const pair< Handle<Value>, Handle<Value> >& pair1, const pair< Handle<Value>, Handle<Value> >& pair2) const;
 
   private:
     int GetTypeScore(const Handle<Value>& value1) const;
@@ -50,21 +54,26 @@ template <class Storage> class Collection : public ObjectWrap  {
   public:
     static bool HasInstance(Handle<Value> val);
 
+    virtual Handle<Value> GetValue(const typename Storage::value_type& value) const = 0;
+
     static Persistent<FunctionTemplate> constructor;
 
     bool IsIterating() const;
+
+    Storage storage;
 
   protected:
     Collection();
     virtual ~Collection();
 
     virtual void InitializeFields(Handle<Object> thisObject);
-    virtual void InitializeValues(Handle<Object> thisObject, Handle<Value> argument);
+    virtual void InitializeValues(Handle<Object> thisObject, Handle<Value> argument) = 0;
     virtual bool operator<(const Collection<Storage>& other) const;
+    virtual bool IsSupportedObject(Handle<Value> value) = 0;
+    virtual bool IsSupportedType(Handle<Value> value) = 0;
 
     Handle<Value> Iterate(Handle<Value> (*iterator)(const Arguments&), const Arguments& args);
 
-    Storage storage;
     int iterationLevel;
 
   private:
@@ -72,18 +81,39 @@ template <class Storage> class Collection : public ObjectWrap  {
 
     static Handle<Value> IsEmpty(const Arguments& args);
     static Handle<Value> Size(const Arguments& args);
-    static Handle<Value> ToArray(const Arguments& args);
-    static Handle<Value> ToString(const Arguments& args);
-
     static Handle<Value> Equals(const Arguments& args);
-
-    static Handle<Value> Add(const Arguments& args);
-    static Handle<Value> AddAll(const Arguments& args);
-    static Handle<Value> Get(const Arguments& args);
     static Handle<Value> Clear(const Arguments& args);
+
+    static Handle<Value> Each(const Arguments& args);
+    static Handle<Value> _Each(const Arguments& args);
 
     friend class CollectionUtil;
     friend class ValueComparator;
+};
+
+
+/*
+ * class IndexedCollection
+ */
+
+template <class Storage> class IndexedCollection : public Collection<Storage> {
+  protected:
+    virtual void InitializeFields(Handle<Object> thisObject);
+    virtual void InitializeValues(Handle<Object> thisObject, Handle<Value> argument);
+    virtual bool IsSupportedObject(Handle<Value> value);
+    virtual bool IsSupportedType(Handle<Value> value);
+
+    static Handle<Value> ToArray(const Arguments& args);
+    static Handle<Value> ToString(const Arguments& args);
+
+    static void AddValue(Handle<Object> collection, Handle<Value> value);
+    static void AddValues(Handle<Object> collection, Handle<Array> array);
+    static void AddValues(Handle<Object> collection, Handle<Object> other);
+
+  private:
+    static Handle<Value> Add(const Arguments& args);
+    static Handle<Value> AddAll(const Arguments& args);
+    static Handle<Value> Get(const Arguments& args);
 };
 
 
@@ -93,12 +123,8 @@ template <class Storage> class Collection : public ObjectWrap  {
 
 class CollectionUtil {
   public:
-    static bool IsSupportedObject(Handle<Value> val);
-    static bool IsSupportedType(Handle<Value> val);
-    static void AddValue(Handle<Object> collection, Handle<Value> value);
-    static void AddValues(Handle<Object> collection, Handle<Array> array);
-    static void AddValues(Handle<Object> collection, Handle<Object> other);
-    static void Each(Handle<Object> collection, void (*processor)(Handle<Object>, Handle<Value>), Handle<Object> memo);
+    static void Dispose(Persistent<Value> value);
+    static void Dispose(pair< Persistent<Value>, Persistent<Value> > pair);
 };
 
 #endif

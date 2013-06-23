@@ -1,9 +1,9 @@
 "use strict";
 
 var assert = require("assert"),
-    Set = require("../lib/collection").Set
+    Set = require("../lib/collection").Set;
 
-describe('Set', function(){
+describe('Set', function() {
   var array1, array2, array3;
   var s1, s2, s3;
 

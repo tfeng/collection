@@ -1,5 +1,6 @@
 #include <cstring>
 #include "common.h"
+#include "Map.h"
 #include "Set.h"
 #include "Vector.h"
 
@@ -9,7 +10,7 @@ using namespace v8;
 
 
 /*
- * class SetComparator
+ * class ValueComparator
  */
 
 bool ValueComparator::operator()(const Handle<Value>& value1, const Handle<Value>& value2) const {
@@ -84,9 +85,9 @@ bool ValueComparator::operator()(const Handle<Value>& value1, const Handle<Value
     return len1 < len2;
   }
 
-  if (Vector::constructor->HasInstance(value1)) {
-    Vector* object1 = ObjectWrap::Unwrap<Vector>(Handle<Object>::Cast(value1));
-    Vector* object2 = ObjectWrap::Unwrap<Vector>(Handle<Object>::Cast(value2));
+  if (Map::constructor->HasInstance(value1)) {
+    Map* object1 = ObjectWrap::Unwrap<Map>(Handle<Object>::Cast(value1));
+    Map* object2 = ObjectWrap::Unwrap<Map>(Handle<Object>::Cast(value2));
     return *object1 < *object2;
   }
 
@@ -96,7 +97,17 @@ bool ValueComparator::operator()(const Handle<Value>& value1, const Handle<Value
     return *object1 < *object2;
   }
 
+  if (Vector::constructor->HasInstance(value1)) {
+    Vector* object1 = ObjectWrap::Unwrap<Vector>(Handle<Object>::Cast(value1));
+    Vector* object2 = ObjectWrap::Unwrap<Vector>(Handle<Object>::Cast(value2));
+    return *object1 < *object2;
+  }
+
   return false;
+}
+
+bool ValueComparator::operator()(const pair< Handle<Value>, Handle<Value> >& pair1, const pair< Handle<Value>, Handle<Value> >& pair2) const {
+  return (*this)(pair1.first, pair2.first) || (!(*this)(pair2.first, pair1.first) && (*this)(pair1.second, pair2.second));
 }
 
 int ValueComparator::GetTypeScore(const Handle<Value>& value) const {
@@ -146,30 +157,17 @@ template <class Storage> Collection<Storage>::Collection() : iterationLevel(0) {
 template <class Storage> Collection<Storage>::~Collection() {
   typename Storage::const_iterator it = storage.begin();
   while (it != storage.end()) {
-    (const_cast< Persistent<Value>& >(*it++)).Dispose();
+    CollectionUtil::Dispose(*it++);
   }
 }
 
 template <class Storage> void Collection<Storage>::InitializeFields(Handle<Object> thisObject) {
   thisObject->Set(String::NewSymbol("isEmpty"), FunctionTemplate::New(IsEmpty)->GetFunction());
   thisObject->Set(String::NewSymbol("size"), FunctionTemplate::New(Size)->GetFunction());
-  thisObject->Set(String::NewSymbol("toArray"), FunctionTemplate::New(ToArray)->GetFunction());
-  thisObject->Set(String::NewSymbol("toString"), FunctionTemplate::New(ToString)->GetFunction());
-
   thisObject->Set(String::NewSymbol("equals"), FunctionTemplate::New(Equals)->GetFunction());
-
-  thisObject->Set(String::NewSymbol("add"), FunctionTemplate::New(Add)->GetFunction());
-  thisObject->Set(String::NewSymbol("addAll"), FunctionTemplate::New(AddAll)->GetFunction());
-  thisObject->Set(String::NewSymbol("get"), FunctionTemplate::New(Get)->GetFunction());
   thisObject->Set(String::NewSymbol("clear"), FunctionTemplate::New(Clear)->GetFunction());
-}
 
-template <class Storage> void Collection<Storage>::InitializeValues(Handle<Object> thisObject, Handle<Value> argument) {
-  if (argument->IsArray()) {
-    CollectionUtil::AddValues(thisObject, Handle<Array>::Cast(argument));
-  } else if (argument->IsObject() && CollectionUtil::IsSupportedObject(argument)) {
-    CollectionUtil::AddValues(thisObject, Handle<Object>::Cast(argument));
-  }
+  thisObject->Set(String::NewSymbol("each"), FunctionTemplate::New(Each)->GetFunction());
 }
 
 template <class Storage> Handle<Value> Collection<Storage>::Iterate(Handle<Value> (*iterator)(const Arguments&), const Arguments& args) {
@@ -193,8 +191,8 @@ template <class Storage> bool Collection<Storage>::operator<(const Collection<St
   typename Storage::const_iterator it1 = storage.begin();
   typename Storage::const_iterator it2 = other.storage.begin();
   while (it1 != storage.end() && it2 != other.storage.end()) {
-    Handle<Value> element1 = *it1++;
-    Handle<Value> element2 = *it2++;
+    typename Storage::value_type element1 = *it1++;
+    typename Storage::value_type element2 = *it2++;
     if (comparator(element1, element2)) {
       return true;
     } else if (comparator(element2, element1)) {
@@ -205,7 +203,7 @@ template <class Storage> bool Collection<Storage>::operator<(const Collection<St
 }
 
 template <class Storage> Handle<Value> Collection<Storage>::IsEmpty(const Arguments& args) {
-  CHECK_DOES_NOT_TAKE_ARGUMENT("isEmpty", args);
+  CHECK_DOES_NOT_TAKE_ARGUMENT(isEmpty, args);
 
   HandleScope scope;
   Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
@@ -213,30 +211,11 @@ template <class Storage> Handle<Value> Collection<Storage>::IsEmpty(const Argume
 }
 
 template <class Storage> Handle<Value> Collection<Storage>::Size(const Arguments& args) {
-  CHECK_DOES_NOT_TAKE_ARGUMENT("size", args);
+  CHECK_DOES_NOT_TAKE_ARGUMENT(size, args);
 
   HandleScope scope;
   Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
   return scope.Close(Uint32::New((uint32_t) obj->storage.size()));
-}
-
-template <class Storage> Handle<Value> Collection<Storage>::ToArray(const Arguments& args) {
-  HandleScope scope;
-  Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
-  Local<Array> array = Array::New((uint32_t) obj->storage.size());
-  typename Storage::iterator it = obj->storage.begin();
-  for (uint32_t i = 0; it != obj->storage.end(); it++, i++) {
-    array->Set(i, Local<Value>::New(*it));
-  }
-  return scope.Close(array);
-}
-
-template <class Storage> Handle<Value> Collection<Storage>::ToString(const Arguments& args) {
-  CHECK_DOES_NOT_TAKE_ARGUMENT("toString", args);
-
-  HandleScope scope;
-  Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
-  return scope.Close(obj->ToArray(args)->ToString());
 }
 
 template <class Storage> Handle<Value> Collection<Storage>::Equals(const Arguments& args) {
@@ -252,8 +231,8 @@ template <class Storage> Handle<Value> Collection<Storage>::Equals(const Argumen
     typename Storage::iterator it2 = obj2->storage.begin();
     ValueComparator comparator;
     while (it1 != obj1->storage.end() && it2 != obj2->storage.end()) {
-      Persistent<Value> v1 = *it1++;
-      Persistent<Value> v2 = *it2++;
+      typename Storage::value_type v1 = *it1++;
+      typename Storage::value_type v2 = *it2++;
       if (comparator(v1, v2) || comparator(v2, v1)) {
         return scope.Close(Boolean::New(false));
       }
@@ -268,14 +247,174 @@ template <class Storage> Handle<Value> Collection<Storage>::Equals(const Argumen
   }
 }
 
-template <class Storage> Handle<Value> Collection<Storage>::Add(const Arguments& args) {
-  CHECK_ITERATING("add", args);
+template <class Storage> Handle<Value> Collection<Storage>::Clear(const Arguments& args) {
+  CHECK_ITERATING(clear, args);
+  CHECK_DOES_NOT_TAKE_ARGUMENT(clear, args);
+
+  HandleScope scope;
+  Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
+
+  typename Storage::iterator it = obj->storage.begin();
+  while (it != obj->storage.end()) {
+    CollectionUtil::Dispose(*it++);
+  }
+
+  obj->storage.clear();
+  return args.This();
+}
+
+template <class Storage> Handle<Value> Collection<Storage>::Each(const Arguments& args) {
+  return ObjectWrap::Unwrap< Collection<Storage> >(args.This())->Iterate(_Each, args);
+}
+
+template <class Storage> Handle<Value> Collection<Storage>::_Each(const Arguments& args) {
+  if (args.Length() != 1 || !(args[0]->IsFunction())) {
+    return ThrowException(Exception::Error(String::New("each(function) takes a function argument.")));
+  }
+
+  HandleScope scope;
+  Local<Object> global = Context::GetCurrent()->Global();
+  Local<Function> function = Local<Function>::Cast(args[0]);
+  TryCatch tryCatch;
+  Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
+  typename Storage::const_iterator it = obj->storage.begin();
+  while (it != obj->storage.end()) {
+    Handle<Value> parameters[1];
+    parameters[0] = obj->GetValue(*it++);
+    Handle<Value> result = function->Call(global, 1, parameters);
+    if (result.IsEmpty()) {
+      return ThrowException(tryCatch.Exception());
+    }
+    if (result->IsFalse()) {
+      break;
+    }
+  }
+  return args.This();
+}
+
+
+/*
+ * class IndexedCollection
+ */
+
+template <class Storage> void IndexedCollection<Storage>::InitializeFields(Handle<Object> thisObject) {
+  Collection<Storage>::InitializeFields(thisObject);
+
+  thisObject->Set(String::NewSymbol("toArray"), FunctionTemplate::New(ToArray)->GetFunction());
+  thisObject->Set(String::NewSymbol("toString"), FunctionTemplate::New(ToString)->GetFunction());
+
+  thisObject->Set(String::NewSymbol("add"), FunctionTemplate::New(Add)->GetFunction());
+  thisObject->Set(String::NewSymbol("addAll"), FunctionTemplate::New(AddAll)->GetFunction());
+  thisObject->Set(String::NewSymbol("get"), FunctionTemplate::New(Get)->GetFunction());
+}
+
+template <class Storage> void IndexedCollection<Storage>::InitializeValues(Handle<Object> thisObject, Handle<Value> argument) {
+  if (argument->IsArray()) {
+    AddValues(thisObject, Handle<Array>::Cast(argument));
+  } else if (IsSupportedObject(argument)) {
+    AddValues(thisObject, Handle<Object>::Cast(argument));
+  }
+}
+
+template <class Storage> bool IndexedCollection<Storage>::IsSupportedObject(Handle<Value> value) {
+  if (Set::constructor->HasInstance(value) ||
+      Vector::constructor->HasInstance(value)) {
+    IndexedCollection<Storage>* object = ObjectWrap::Unwrap< IndexedCollection<Storage> >(Handle<Object>::Cast(value));
+    typename Storage::const_iterator it = object->storage.begin();
+    while (it != object->storage.end()) {
+      if (!IsSupportedType(*it++)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  return false;
+}
+
+template <class Storage> bool IndexedCollection<Storage>::IsSupportedType(Handle<Value> value) {
+  if (value.IsEmpty() ||
+      value->IsUndefined() ||
+      value->IsNull() ||
+      value->IsBoolean() ||
+      value->IsNumberObject() ||
+      value->IsNumber() ||
+      value->IsDate() ||
+      value->IsString()) {
+    return true;
+  }
+
+  if (value->IsArray()) {
+    Handle<Array> array = Handle<Array>::Cast(value);
+    for (uint32_t i = 0; i < array->Length(); i++) {
+      if (!IsSupportedType(array->Get(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  return IsSupportedObject(value);
+}
+
+template <class Storage> Handle<Value> IndexedCollection<Storage>::ToArray(const Arguments& args) {
+  HandleScope scope;
+  IndexedCollection<Storage>* obj = ObjectWrap::Unwrap< IndexedCollection<Storage> >(args.This());
+  Local<Array> array = Array::New((uint32_t) obj->storage.size());
+  typename Storage::iterator it = obj->storage.begin();
+  for (uint32_t i = 0; it != obj->storage.end(); it++, i++) {
+    array->Set(i, obj->GetValue(*it));
+  }
+  return scope.Close(array);
+}
+
+template <class Storage> Handle<Value> IndexedCollection<Storage>::ToString(const Arguments& args) {
+  CHECK_DOES_NOT_TAKE_ARGUMENT(toString, args);
+
+  HandleScope scope;
+  return scope.Close(ToArray(args)->ToString());
+}
+
+template <class Storage> void IndexedCollection<Storage>::AddValue(Handle<Object> collection, Handle<Value> value) {
+  if (Set::constructor->HasInstance(collection)) {
+    Set* object = ObjectWrap::Unwrap<Set>(collection);
+    object->storage.insert(Persistent<Value>::New(value));
+  } else if (Vector::constructor->HasInstance(collection)) {
+    Vector* object = ObjectWrap::Unwrap<Vector>(collection);
+    object->storage.push_back(Persistent<Value>::New(value));
+  }
+}
+
+template <class Storage> void IndexedCollection<Storage>::AddValues(Handle<Object> collection, Handle<Array> array) {
+  if (Set::constructor->HasInstance(collection)) {
+    Set* object = ObjectWrap::Unwrap<Set>(collection);
+    for (uint32_t i = 0; i < array->Length(); i++) {
+      object->storage.insert(Persistent<Value>::New(array->Get(i)));
+    }
+  } else if (Vector::constructor->HasInstance(collection)) {
+    Vector* object = ObjectWrap::Unwrap<Vector>(collection);
+    for (uint32_t i = 0; i < array->Length(); i++) {
+      object->storage.push_back(Persistent<Value>::New(array->Get(i)));
+    }
+  }
+}
+
+template <class Storage> void IndexedCollection<Storage>::AddValues(Handle<Object> collection, Handle<Object> other) {
+  IndexedCollection<Storage>* object = ObjectWrap::Unwrap< IndexedCollection<Storage> >(other);
+  typename Storage::iterator it = object->storage.begin();
+  while (it != object->storage.end()) {
+    AddValue(collection, *it++);
+  }
+}
+
+template <class Storage> Handle<Value> IndexedCollection<Storage>::Add(const Arguments& args) {
+  CHECK_ITERATING(add, args);
   if (args.Length() == 0) {
     return ThrowException(Exception::Error(String::New("add(value, ...) takes at least one argument.")));
   }
 
   HandleScope scope;
-  Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
+  IndexedCollection<Storage>* obj = ObjectWrap::Unwrap< IndexedCollection<Storage> >(args.This());
   typename Storage::iterator end = obj->storage.end();
   for (int i = 0; i < args.Length(); i++) {
     end = obj->storage.insert(end, Persistent<Value>::New(args[i]));
@@ -284,14 +423,14 @@ template <class Storage> Handle<Value> Collection<Storage>::Add(const Arguments&
   return args.This();
 }
 
-template <class Storage> Handle<Value> Collection<Storage>::AddAll(const Arguments& args) {
-  CHECK_ITERATING("addAll", args);
+template <class Storage> Handle<Value> IndexedCollection<Storage>::AddAll(const Arguments& args) {
+  CHECK_ITERATING(addAll, args);
   if (args.Length() != 1 || !(args[0]->IsArray())) {
     return ThrowException(Exception::Error(String::New("addAll(array) takes one array argument.")));
   }
 
   HandleScope scope;
-  Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
+  IndexedCollection<Storage>* obj = ObjectWrap::Unwrap< IndexedCollection<Storage> >(args.This());
   Handle<Array> array = Handle<Array>::Cast(args[0]);
   typename Storage::iterator end = obj->storage.end();
   for (uint32_t i = 0; i < array->Length(); i++) {
@@ -301,7 +440,7 @@ template <class Storage> Handle<Value> Collection<Storage>::AddAll(const Argumen
   return args.This();
 }
 
-template <class Storage> Handle<Value> Collection<Storage>::Get(const Arguments& args) {
+template <class Storage> Handle<Value> IndexedCollection<Storage>::Get(const Arguments& args) {
   if (args.Length() == 0) {
     return ThrowException(Exception::Error(String::New("get(index, ...) takes at least one argument.")));
   }
@@ -313,7 +452,7 @@ template <class Storage> Handle<Value> Collection<Storage>::Get(const Arguments&
   }
 
   HandleScope scope;
-  Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
+  IndexedCollection<Storage>* obj = ObjectWrap::Unwrap< IndexedCollection<Storage> >(args.This());
   if (args.Length() == 1 && args[0]->IsUint32()) {
     uint32_t index = args[0]->Uint32Value();
     if (index < obj->storage.size()) {
@@ -339,120 +478,18 @@ template <class Storage> Handle<Value> Collection<Storage>::Get(const Arguments&
   return Undefined();
 }
 
-template <class Storage> Handle<Value> Collection<Storage>::Clear(const Arguments& args) {
-  CHECK_ITERATING("clear", args);
-  CHECK_DOES_NOT_TAKE_ARGUMENT("clear", args);
-
-  HandleScope scope;
-  Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
-
-  typename Storage::iterator it = obj->storage.begin();
-  while (it != obj->storage.end()) {
-    (const_cast< Persistent<Value>& >(*it++)).Dispose();
-  }
-
-  obj->storage.clear();
-  return args.This();
-}
-
 
 /*
  * class CollectionUtil
  */
 
-bool CollectionUtil::IsSupportedObject(Handle<Value> value) {
-  if (value->IsObject()) {
-    if (Vector::constructor->HasInstance(value)) {
-      Vector* object = ObjectWrap::Unwrap<Vector>(Handle<Object>::Cast(value));
-      VectorStorage::const_iterator it = object->storage.begin();
-      while (it != object->storage.end()) {
-        if (!IsSupportedType(*it++)) {
-          return false;
-        }
-      }
-      return true;
-    } else if (Set::constructor->HasInstance(value)) {
-      Set* object = ObjectWrap::Unwrap<Set>(Handle<Object>::Cast(value));
-      SetStorage::const_iterator it = object->storage.begin();
-      while (it != object->storage.end()) {
-        if (!IsSupportedType(*it++)) {
-          return false;
-        }
-      }
-      return true;
-    }
-  }
-
-  return false;
+void CollectionUtil::Dispose(Persistent<Value> value) {
+  value.Dispose();
 }
 
-bool CollectionUtil::IsSupportedType(Handle<Value> value) {
-  if (value.IsEmpty() ||
-      value->IsUndefined() ||
-      value->IsNull() ||
-      value->IsBoolean() ||
-      value->IsNumberObject() ||
-      value->IsNumber() ||
-      value->IsDate() ||
-      value->IsString()) {
-    return true;
-  }
-
-  if (value->IsArray()) {
-    Handle<Array> array = Handle<Array>::Cast(value);
-    for (uint32_t i = 0; i < array->Length(); i++) {
-      if (!IsSupportedType(array->Get(i))) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  return IsSupportedObject(value);
-}
-
-void CollectionUtil::AddValue(Handle<Object> collection, Handle<Value> value) {
-  if (Vector::constructor->HasInstance(collection)) {
-    Vector* object = ObjectWrap::Unwrap<Vector>(collection);
-    object->storage.push_back(Persistent<Value>::New(value));
-  } else if (Set::constructor->HasInstance(collection)) {
-    Set* object = ObjectWrap::Unwrap<Set>(collection);
-    object->storage.insert(Persistent<Value>::New(value));
-  }
-}
-
-void CollectionUtil::AddValues(Handle<Object> collection, Handle<Array> array) {
-  if (Vector::constructor->HasInstance(collection)) {
-    Vector* object = ObjectWrap::Unwrap<Vector>(collection);
-    for (uint32_t i = 0; i < array->Length(); i++) {
-      object->storage.push_back(Persistent<Value>::New(array->Get(i)));
-    }
-  } else if (Set::constructor->HasInstance(collection)) {
-    Set* object = ObjectWrap::Unwrap<Set>(collection);
-    for (uint32_t i = 0; i < array->Length(); i++) {
-      object->storage.insert(Persistent<Value>::New(array->Get(i)));
-    }
-  }
-}
-
-void CollectionUtil::AddValues(Handle<Object> collection, Handle<Object> other) {
-  Each(other, &AddValue, collection);
-}
-
-void CollectionUtil::Each(Handle<Object> collection, void (*processor)(Handle<Object>, Handle<Value>), Handle<Object> memo) {
-  if (Vector::constructor->HasInstance(collection)) {
-    Vector* object = ObjectWrap::Unwrap<Vector>(collection);
-    VectorStorage::iterator it = object->storage.begin();
-    while (it != object->storage.end()) {
-      processor(memo, *it++);
-    }
-  } else if (Set::constructor->HasInstance(collection)) {
-    Set* object = ObjectWrap::Unwrap<Set>(collection);
-    SetStorage::iterator it = object->storage.begin();
-    while (it != object->storage.end()) {
-      processor(memo, *it++);
-    }
-  }
+void CollectionUtil::Dispose(pair< Persistent<Value>, Persistent<Value> > pair) {
+  pair.first.Dispose();
+  pair.second.Dispose();
 }
 
 
@@ -462,5 +499,8 @@ void CollectionUtil::Each(Handle<Object> collection, void (*processor)(Handle<Ob
 
 template<class Storage> Persistent<FunctionTemplate> Collection<Storage>::constructor;
 
-template class Collection<SetStorage>;
-template class Collection<VectorStorage>;
+template class Collection<Map::Storage>;
+template class Collection<Set::Storage>;
+template class Collection<Vector::Storage>;
+template class IndexedCollection<Set::Storage>;
+template class IndexedCollection<Vector::Storage>;

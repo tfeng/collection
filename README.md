@@ -25,13 +25,13 @@ A `set` is a sorted tree in its data representation. Existence of an element can
 
 #### Map
 
-A `map` can be viewed as a set of `entries`. Each `entry` is a (`key`, `value`) pair. No two `entries` with the same key exist in a `map`.
+A `map` can be viewed as a set of `entries`. Each entry is a (`key`, `value`) pair. No two entries with the same key exist in a `map`.
 
-Internally, `map` is represented by a tree sorted by its `keys`, in a way similar to `set` that keeps its elements sorted. A `map`, however, has the additional capability of associating `values` with `keys`, but `values` do not pacticipate in sorting.
+Internally, `map` is represented by a tree sorted by its keys, in a way similar to `set` that keeps its elements sorted. A `map`, however, has the additional capability of associating values with keys, but values do not pacticipate in sorting.
 
-The `put` operation is to put an `entry` in to the map, so that the `key` of the `entry` are inserted into the proper location of the tree. If the same `key` already exists, its currently associated `value` will be replaced.
+The `put` operation is to put an entry in to the map, so that the key of the entry are inserted into the proper location of the tree. If the same key already exists, its currently associated value will be replaced.
 
-`Each` method of a `map` can be used to iterate over `entries`.
+`Each` method of a `map` can be used to iterate over entries.
 
 Installation
 ----------

@@ -1,5 +1,5 @@
 {
-  "name": "collection.js",
+  "name": "collection",
   "id": "collection",
   "version": "0.1.1",
   "description": "Node.js cross-platform native collection library",

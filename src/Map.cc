@@ -35,6 +35,7 @@ void Map::InitializeFields(Handle<Object> thisObject) {
 
   thisObject->Set(String::NewSymbol("getAt"), thisObject->Get(String::NewSymbol("get")));
   thisObject->Set(String::NewSymbol("get"), FunctionTemplate::New(Get)->GetFunction());
+  thisObject->Set(String::NewSymbol("keys"), FunctionTemplate::New(Keys)->GetFunction());
   thisObject->Set(String::NewSymbol("remove"), FunctionTemplate::New(Remove)->GetFunction());
   thisObject->Set(String::NewSymbol("set"), FunctionTemplate::New(Set)->GetFunction());
   thisObject->Set(String::NewSymbol("setAll"), FunctionTemplate::New(SetAll)->GetFunction());
@@ -54,7 +55,7 @@ void Map::InitializeValues(Handle<Object> thisObject, Handle<Value> argument) {
     } else {
       Local<Array> propertyNames = initObject->GetPropertyNames();
       for (size_t i = 0; i < propertyNames->Length(); i++) {
-        Local<Value> key = propertyNames->Get(i);
+        Local<Value> key = propertyNames->Get(i)->ToString();
         Local<Value> value = initObject->Get(key);
         Storage::iterator it = obj->storage.find((Persistent<Value>) key);
         if (it == obj->storage.end()) {
@@ -109,7 +110,7 @@ Handle<Value> Map::ToObject(const Arguments& args) {
   Local<Object> result = Object::New();
   Storage::iterator it = obj->storage.begin();
   while (it != obj->storage.end()) {
-    result->Set(it->first->ToString(), Local<Value>::New(it->second));
+    result->Set(it->first, Local<Value>::New(it->second));
     it++;
   }
   return scope.Close(result);
@@ -146,6 +147,20 @@ Handle<Value> Map::Get(const Arguments& args) {
     return scope.Close(array);
   }
   return Undefined();
+}
+
+Handle<Value> Map::Keys(const Arguments& args) {
+  CHECK_DOES_NOT_TAKE_ARGUMENT(keys, args);
+
+  HandleScope scope;
+  Map* obj = ObjectWrap::Unwrap<Map>(args.This());
+  Local<Array> array = Array::New();
+  Storage::iterator it = obj->storage.begin();
+  int i = 0;
+  while (it != obj->storage.end()) {
+    array->Set(i++, (it++)->first);
+  }
+  return scope.Close(array);
 }
 
 Handle<Value> Map::Remove(const Arguments& args) {

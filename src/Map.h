@@ -34,6 +34,7 @@ class Map : public Collection< map<Persistent<Value>, Persistent<Value>, ValueCo
     static Handle<Value> ToString(const Arguments& args);
 
     static Handle<Value> Get(const Arguments& args);
+    static Handle<Value> Keys(const Arguments& args);
     static Handle<Value> Remove(const Arguments& args);
     static Handle<Value> Set(const Arguments& args);
     static Handle<Value> SetAll(const Arguments& args);

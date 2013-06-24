@@ -190,7 +190,6 @@ Get elements of this vector at the specified indexes.
 1
 > v.get(0,1,5,3)
 [ 1, 2, , 4 ]
->
 ```
 
 #### has(value, ...)
@@ -484,7 +483,6 @@ Get elements of this set at the specified indexes.
 1
 > s.get(0,1,5,3)
 [ 1, 2, , 4 ]
->
 ```
 
 #### has(value, ...)
@@ -626,11 +624,55 @@ Convert this set into a string.
 
 ### Map
 
+A map is structured as a tree sorted by the keys. It provides the capability of looking up a value associated with a key.
+
+A map can be converted into a JavaScript object, using the `toObject()` function. However, there is an important difference between the two, though `toObject()`, and subsequently `toString()` that depends to `toObject()`, obscure this difference. Keys in a map are allowed to be of any primitive data type, array, collection, or combination of these, wheres keys in a JavaScript object can only be strings. Therefore, if a value is associated with integer `1` in a map, one cannot retrieve this value back by invoking `get("1")`, where string `"1"` is used as the key for lookup.
+
+Due to map's sorted nature, some functions below allow to access the map by an index, which points to the location of the sorted tree. A `entry` object is a common way of returning both the key and the value at that location.
+
+*Entry:* An `entry` is a (`key`, `value`) pair in the map. An entry object provides a `key()` function to return the key, a `value()` function to return the value, a `toObject()` function to return an equivalent JavaScript object, and a `toString()` function to return the string that describes it.
+
 Examples below assume set `m` is initialized with entries `{1:"a", 2:"b", 3:"c", 4:"d"}`:
 
 ```node
-> var m = new Map({1:"a",2:"b",3:"c",4:"d"});
+> var m = new Map({1:"a",2:"b","a":"b","c":"d"}).set(3,"c").set(4,"d");
 undefined
-> m.toString();
-'{"1":"a","2":"b","3":"c","4":"d"}'
+> m.keys();
+[ 3, 4, '1', '2', 'a', 'c' ]
+> m.toObject();
+{ '1': 'a', '2': 'b', '3': 'c', '4': 'd', a: 'b', c: 'd' }
+> m.get(1);
+undefined
+> m.get("1");
+'a'
+> m.get(3);
+'c'
+```
+
+#### get(key, ...)
+
+Get value of this map associated with the specified keys.
+
+*Return:* If only 1 key is given as parameter, value in this map associated with that key; if multiple keys are given, an array of values associated with those indexes.
+
+```node
+> m.get("1");
+'a'
+> m.get(1);
+undefined
+> m.get(1,4,"a",3);
+[ , 'd', 'b', 'c' ]
+```
+
+#### getAt(index, ...)
+
+Get entry of this map at the specified indexes.
+
+*Return:* If only 1 index is given as parameter, entry of this map at that index; if multiple indexes are given, an array of entries at those indexes.
+
+```node
+> m.getAt(0).toObject();
+{ key: 3, value: 'c' }
+> m.getAt(1,4,8,3).toString();
+'{"key":4,"value":"d"},{"key":"a","value":"b"},,{"key":"2","value":"b"}'
 ```

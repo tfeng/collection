@@ -30,15 +30,14 @@ void Map::Init(Handle<Object> exports) {
 void Map::InitializeFields(Handle<Object> thisObject) {
   Collection<Storage>::InitializeFields(thisObject);
 
-  thisObject->Set(String::NewSymbol("toObject"), FunctionTemplate::New(ToObject)->GetFunction());
-  thisObject->Set(String::NewSymbol("toString"), FunctionTemplate::New(ToString)->GetFunction());
-
-  thisObject->Set(String::NewSymbol("getAt"), thisObject->Get(String::NewSymbol("get")));
   thisObject->Set(String::NewSymbol("get"), FunctionTemplate::New(Get)->GetFunction());
+  thisObject->Set(String::NewSymbol("getAt"), FunctionTemplate::New(GetAt)->GetFunction());
   thisObject->Set(String::NewSymbol("keys"), FunctionTemplate::New(Keys)->GetFunction());
   thisObject->Set(String::NewSymbol("remove"), FunctionTemplate::New(Remove)->GetFunction());
   thisObject->Set(String::NewSymbol("set"), FunctionTemplate::New(Set)->GetFunction());
   thisObject->Set(String::NewSymbol("setAll"), FunctionTemplate::New(SetAll)->GetFunction());
+  thisObject->Set(String::NewSymbol("toObject"), FunctionTemplate::New(ToObject)->GetFunction());
+  thisObject->Set(String::NewSymbol("toString"), FunctionTemplate::New(ToString)->GetFunction());
 }
 
 void Map::InitializeValues(Handle<Object> thisObject, Handle<Value> argument) {
@@ -102,27 +101,6 @@ Handle<Value> Map::New(const Arguments& args) {
   return args.This();
 }
 
-Handle<Value> Map::ToObject(const Arguments& args) {
-  CHECK_DOES_NOT_TAKE_ARGUMENT(toObject, args);
-
-  HandleScope scope;
-  Map* obj = ObjectWrap::Unwrap<Map>(args.This());
-  Local<Object> result = Object::New();
-  Storage::iterator it = obj->storage.begin();
-  while (it != obj->storage.end()) {
-    result->Set(it->first, Local<Value>::New(it->second));
-    it++;
-  }
-  return scope.Close(result);
-}
-
-Handle<Value> Map::ToString(const Arguments& args) {
-  CHECK_DOES_NOT_TAKE_ARGUMENT(toString, args);
-
-  HandleScope scope;
-  return scope.Close(CollectionUtil::Stringify(ToObject(args)));
-}
-
 Handle<Value> Map::Get(const Arguments& args) {
   if (args.Length() == 0) {
     return ThrowException(Exception::Error(String::New("get(key, ...) takes at least one argument.")));
@@ -147,6 +125,20 @@ Handle<Value> Map::Get(const Arguments& args) {
     return scope.Close(array);
   }
   return Undefined();
+}
+
+Handle<Value> Map::GetAt(const Arguments& args) {
+  if (args.Length() == 0) {
+    return ThrowException(Exception::Error(String::New("getAt(index, ...) takes at least one argument.")));
+  }
+  for (int i = 0; i < args.Length(); i++) {
+    Handle<Value> arg = args[i];
+    if (!(arg->IsUndefined()) && !(arg->IsNull()) && !(arg->IsUint32())) {
+      return ThrowException(Exception::Error(String::New("getAt(index, ...) takes only integer arguments.")));
+    }
+  }
+
+  return Collection<Storage>::Get(args);
 }
 
 Handle<Value> Map::Keys(const Arguments& args) {
@@ -215,6 +207,27 @@ Handle<Value> Map::SetAll(const Arguments& args) {
   obj->InitializeValues(args.This(), args[0]);
 
   return args.This();
+}
+
+Handle<Value> Map::ToObject(const Arguments& args) {
+  CHECK_DOES_NOT_TAKE_ARGUMENT(toObject, args);
+
+  HandleScope scope;
+  Map* obj = ObjectWrap::Unwrap<Map>(args.This());
+  Local<Object> result = Object::New();
+  Storage::iterator it = obj->storage.begin();
+  while (it != obj->storage.end()) {
+    result->Set(it->first, Local<Value>::New(it->second));
+    it++;
+  }
+  return scope.Close(result);
+}
+
+Handle<Value> Map::ToString(const Arguments& args) {
+  CHECK_DOES_NOT_TAKE_ARGUMENT(toString, args);
+
+  HandleScope scope;
+  return scope.Close(CollectionUtil::Stringify(ToObject(args)));
 }
 
 

@@ -39,11 +39,9 @@ class Vector : public IndexedCollection< InternalVector<Persistent<Value>, Value
   private:
     static Handle<Value> New(const Arguments& args);
 
-    static Handle<Value> Index(const Arguments& args);
-
-    static Handle<Value> Set(const Arguments& args);
     static Handle<Value> Remove(const Arguments& args);
     static Handle<Value> Reverse(const Arguments& args);
+    static Handle<Value> Set(const Arguments& args);
 
     static Handle<Value> Each(const Arguments& args);
     static Handle<Value> _Each(const Arguments& args);
@@ -67,10 +65,7 @@ class VectorModifier : public ObjectWrap {
 
     static Persistent<FunctionTemplate> constructor;
 
-  private:
-    VectorModifier();
-    virtual ~VectorModifier();
-
+  protected:
     static Handle<Value> New(const Arguments& args);
 
     static Handle<Value> IsFirst(const Arguments& args);
@@ -81,6 +76,10 @@ class VectorModifier : public ObjectWrap {
     static Handle<Value> Remove(const Arguments& args);
     static Handle<Value> InsertBefore(const Arguments& args);
     static Handle<Value> InsertAfter(const Arguments& args);
+
+  private:
+    VectorModifier();
+    virtual ~VectorModifier();
 
     bool isFirst;
     bool isLast;

@@ -119,6 +119,11 @@ Remove all elements from this vector.
 
 *Return:* This vector.
 
+```node
+> v.clear().toArray();
+[]
+```
+
 #### each(callback)
 
 Iterate over elements of this vector, and invoke the `callback` function for each element. The callback function should be of the form `function(v, m) { ... }`. `v` is the element. `m` is a `vector modifier`, which may be used to inspect properties of the iteration as well as modify the vector. The callback function may return `false` indicating the iteration should stop immediately. Any other returned value is ignored.
@@ -153,7 +158,7 @@ Test whether this vector equals the given object.
 *Return:* `true` or `false`.
 
 ```node
-> v.equals(new Vector([1,2,3,4]))
+> v.equals(new Vector([1,2,3,4]));
 true
 ```
 
@@ -225,7 +230,7 @@ Test whether the vector is empty.
 *Return:* `true` or `false`.
 
 ```node
-> v.isEmpty()
+> v.isEmpty();
 false
 ```
 
@@ -351,7 +356,7 @@ Check the size of the vector.
 *Return:* Number of elements in this vector.
 
 ```node
-> v.size()
+> v.size();
 4
 ```
 
@@ -362,13 +367,13 @@ Convert this vector into an array that contains the same elements. If the vector
 *Return:* An array.
 
 ```node
-> v.toArray()
+> v.toArray();
 [ 1, 2, 3, 4 ]
 > v.add(["a", "b"]).toArray();
 [ 1, 2, 3, 4, [ 'a', 'b' ] ]
 > v.toArray()[4].push("c");
 3
-> v.toArray()
+> v.toArray();
 [ 1, 2, 3, 4, [ 'a', 'b', 'c' ] ]
 ```
 
@@ -428,6 +433,11 @@ Remove all elements from this set.
 
 *Return:* This set.
 
+```node
+> s.clear().toArray();
+[]
+```
+
 #### each(callback)
 
 Iterate over elements of this set, and invoke the `callback` function for each element. The callback function should be of the form `function(v) { ... }`. `v` is the element. The callback function may return `false` indicating the iteration should stop immediately. Any other returned value is ignored.
@@ -446,7 +456,7 @@ Test whether this set equals the given object. (See vector's `equals` function f
 *Return:* `true` or `false`.
 
 ```node
-> s.equals(new Set([4,3,2,1]))
+> s.equals(new Set([4,3,2,1]));
 true
 ```
 
@@ -496,6 +506,21 @@ Check whether the given values exist in the set.
 [ true, true, false ]
 ```
 
+#### index(value, ...)
+
+Return indexes of the specified elements in this set.
+
+*Return:* If only 1 value is given as parameter, index of that element, or `undefined` if not found; if multiple values are given, an array of indexes.
+
+```node
+> s.index(2)
+1
+> s.index(1,3,5,7)
+[ 0, 2 ]
+> s.index(1,5,7,3)
+[ 0, , , 2 ]
+```
+
 #### isEmpty()
 
 Test whether the set is empty.
@@ -503,7 +528,7 @@ Test whether the set is empty.
 *Return:* `true` or `false`.
 
 ```node
-> s.isEmpty()
+> s.isEmpty();
 false
 ```
 
@@ -557,7 +582,7 @@ Remove elements at the specified indexes from this set. For any index greater th
 
 Remove last element of this set. If this set is empty, there is no effect.
 
-*Return:* This vector.
+*Return:* This set.
 
 ```node
 > s.removeLast().removeLast().toArray();
@@ -570,7 +595,7 @@ Remove last element of this set. If this set is empty, there is no effect.
 
 Remove elements between the `start` index (inclusive) and the `end` index (exclusive). If `start` is greater than or equal to size of this set, there is no effect. If `end` is greater than or equal to size of this set, all elements from `start` index are removed.
 
-*Return:* This vector.
+*Return:* This set.
 
 ```node
 > s.removeRange(9,20).toArray();
@@ -590,7 +615,7 @@ Check the size of the set.
 *Return:* Number of elements in this set.
 
 ```node
-> s.size()
+> s.size();
 4
 ```
 
@@ -601,13 +626,13 @@ Convert this set into an array that contains the same elements. If the set conta
 *Return:* An array.
 
 ```node
-> s.toArray()
+> s.toArray();
 [ 1, 2, 3, 4 ]
 > s.add(["a", "b"]).toArray();
 [ 1, 2, 3, 4, [ 'a', 'b' ] ]
 > s.toArray()[4].push("c");
 3
-> s.toArray()
+> s.toArray();
 [ 1, 2, 3, 4, [ 'a', 'b', 'c' ] ]
 ```
 
@@ -618,7 +643,7 @@ Convert this set into a string.
 *Return:* A string.
 
 ```node
-> s.toString()
+> s.toString();
 '[1,2,3,4]'
 ```
 
@@ -649,6 +674,63 @@ undefined
 'c'
 ```
 
+#### clear()
+
+Remove all elements from this set.
+
+*Return:* This set.
+
+```node
+> m.clear().toObject();
+{}
+```
+
+#### each(callback)
+
+Iterate over entries of this map, and invoke the `callback` function for each entry. The callback function should be of the form `function(v) { ... }`. `v` is the entry. The callback function may return `false` indicating the iteration should stop immediately. Any other returned value is ignored.
+
+*Return:* This map.
+
+```node
+> m.each(function(v){if(v.key()%2==0){console.log(v.toObject()); return false;}});
+{ key: 4, value: 'd' }
+```
+
+#### equals(object)
+
+Test whether this map equals the given object. (See vector's `equals` function for definition of equality.)
+
+*Return:* `true` or `false`.
+
+```node
+> m.equals(new Map(m.toObject())); // false, because toObject() converts all keys to strings.
+false
+> m.equals(new Map(m));
+true
+```
+
+#### filter(callback)
+
+Return in an array all entries that make the `callback` function return `true`. The callback function should be of the form `function(v) { ... }`.
+
+*Return:* An array of entries for which the callback function returns `true`.
+
+```node
+> m.filter(function(v){return v.key()%2==0;}).toString();
+'{"key":4,"value":"d"},{"key":"2","value":"b"}'
+```
+
+#### find(callback)
+
+Return the first entry of this map that makes the `callback` function return `true`. The callback function should be of the form `function(v) { ... }`.
+
+*Return:* The first entry of this map for which the callback function returns `true`.
+
+```node
+> m.find(function(v){return v.key()%2==0;}).toObject();
+{ key: 4, value: 'd' }
+```
+
 #### get(key, ...)
 
 Get value of this map associated with the specified keys.
@@ -675,4 +757,176 @@ Get entry of this map at the specified indexes.
 { key: 3, value: 'c' }
 > m.getAt(1,4,8,3).toString();
 '{"key":4,"value":"d"},{"key":"a","value":"b"},,{"key":"2","value":"b"}'
+```
+
+#### has(key, ...)
+
+Check whether the given keys exist in the map.
+
+*Return:* If only 1 key is given as parameter, `true` or `false`; if multiple keys are given, an array of boolean values, each identifying whether the corresponding key exists.
+
+```node
+> m.has(2,4,6)
+[ false, true, false ]
+> m.has(4)
+true
+```
+
+#### isEmpty()
+
+Test whether the map is empty.
+
+*Return:* `true` or `false`.
+
+```node
+> m.isEmpty();
+false
+```
+
+#### reduce(callback, memo)
+
+Iterates over all entries of this map and invoke the `callback` function for each entry. Each time a `memo` value is passed into the callback, and the return value of the callback becomes the memo value of the next iteration. The return value in the last iteration is the return value of the `reduce` function itself. The callback should be of the form `function(memo, v){ ... }`.
+
+*Return:* The return value of the callback function in the last iteration.
+
+```node
+> m.reduce(function(memo, v){return memo+v.value()}, "");
+'cdabbd'
+```
+
+#### reduceRight(callback, memo)
+
+Perform the same function as `reduce`, but iterate entries of this map in reverse order.
+
+*Return:* The return value of the callback function in the last iteration.
+
+```node
+> m.reduceRight(function(memo, v){return memo+v.value()}, "");
+'dbbadc'
+```
+
+#### remove(key, ...)
+
+Remove entries identified by the given keys from this map.
+
+*Return:* This map.
+
+```node
+> m.remove(3,4).toObject();
+{ '1': 'a', '2': 'b', a: 'b', c: 'd' }
+```
+
+#### removeAt(index, ...)
+
+Remove entries at the specified indexes from this map. For any index greater than size of this map, there is no effect.
+
+*Return:* This set.
+
+```node
+> m.removeAt(0,3,5).toObject();
+{ '1': 'a', '4': 'd', a: 'b' }
+```
+
+#### removeLast()
+
+Remove last entry of this map. If this map is empty, there is no effect.
+
+*Return:* This map.
+
+```node
+> m.removeLast().removeLast().toObject();
+{ '1': 'a', '2': 'b', '3': 'c', '4': 'd' }
+> m.removeLast().removeLast().removeLast().removeLast().toObject();
+{}
+```
+
+#### removeRange(start, end)
+
+Remove entries between the `start` index (inclusive) and the `end` index (exclusive). If `start` is greater than or equal to size of this map, there is no effect. If `end` is greater than or equal to size of this map, all entries from `start` index are removed.
+
+*Return:* This map.
+
+```node
+> m.removeRange(9,20).toObject();
+{ '1': 'a', '2': 'b', '3': 'c', '4': 'd', a: 'b', c: 'd' }
+> m.removeRange(0,0).toObject();
+{ '1': 'a', '2': 'b', '3': 'c', '4': 'd', a: 'b', c: 'd' }
+> m.removeRange(0,1).toObject();
+{ '1': 'a', '2': 'b', '4': 'd', a: 'b', c: 'd' }
+> m.removeRange(1,999).toObject();
+{ '4': 'd' }
+```
+
+#### set(key, value)
+
+Set a new value associated with a key. If the key already exists in the map, existing value is substituted by the given new value. If the key does not exist, the given (key, value) entry is added to the map.
+
+*Return:* This map.
+
+```node
+> m.set(3,"x").set(4,"y").toObject();
+{ '1': 'a', '2': 'b', '3': 'x', '4': 'y', a: 'b', c: 'd' }
+```
+
+#### setAll(object)
+
+Set all the values in `object` in the map. The object can be another map or a JavaScript object.
+
+*Return:* This map.
+
+```node
+> m.setAll({3:"x",4:"y"}).toObject();
+{ '1': 'a', '2': 'b', '3': 'x', '4': 'y', a: 'b', c: 'd' }
+> m.setAll(new Map({null:undefined})).toObject();
+{ '1': 'a',
+  '2': 'b',
+  '3': 'c',
+  '4': 'd',
+  a: 'b',
+  c: 'd',
+  null: undefined }
+```
+
+#### size()
+
+Check the size of the map.
+
+*Return:* Number of entries in this map.
+
+```node
+> m.size();
+6
+```
+
+#### toArray()
+
+Convert this map into an array that contains the same entries. If the map contains an entry with an array or a collection as its key or value, the same instance of array or collection will also be the key or value of the corresponding entry in the resulting array.
+
+*Return:* An array.
+
+```node
+> m.toArray().toString();
+'{"key":3,"value":"c"},{"key":4,"value":"d"},{"key":"1","value":"a"},{"key":"2","value":"b"},{"key":"a","value":"b"},{"key":"c","value":"d"}'
+```
+
+#### toObject()
+
+Convert this map into a JavaScript object. All keys in the map are converted into strings using their `toString()` functions before storing into the object. As a result, values of some originally distinct keys, such as `1` and `"1"`, are stored into the same field of the object. In such a case, value of the greater key according to keys' sorting order overwrites value of the smaller key. Because of this conversion, `new Map(m.toObject())` does not always produce an equivalent map as `m`.
+
+```node
+> m.toObject();
+{ '1': 'a', '2': 'b', '3': 'c', '4': 'd', a: 'b', c: 'd' }
+> new Map().set(m, 1).toObject();
+{ '{"1":"a","2":"b","3":"c","4":"d","a":"b","c":"d"}': 1 }
+```
+
+#### toString()
+
+Convert this map into a string. This is equivalent to calling `toObject()` and then calling `toString()` on the returned object. Because of this, the returned string may not contain all the keys and values of the original map. (See `toObject()` for explanation.)
+
+*Return:* A string.
+
+```node
+> m.toString();
+'{"1":"a","2":"b","3":"c","4":"d","a":"b","c":"d"}'
 ```

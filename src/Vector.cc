@@ -44,11 +44,9 @@ void Vector::Init(Handle<Object> exports) {
 void Vector::InitializeFields(Handle<Object> thisObject) {
   IndexedCollection<Storage>::InitializeFields(thisObject);
 
-  thisObject->Set(String::NewSymbol("index"), FunctionTemplate::New(Index)->GetFunction());
-
-  thisObject->Set(String::NewSymbol("set"), FunctionTemplate::New(Set)->GetFunction());
   thisObject->Set(String::NewSymbol("remove"), FunctionTemplate::New(Remove)->GetFunction());
   thisObject->Set(String::NewSymbol("reverse"), FunctionTemplate::New(Reverse)->GetFunction());
+  thisObject->Set(String::NewSymbol("set"), FunctionTemplate::New(Set)->GetFunction());
   thisObject->Set(String::NewSymbol("each"), FunctionTemplate::New(Each)->GetFunction());
   thisObject->Set(String::NewSymbol("map"), FunctionTemplate::New(Map)->GetFunction());
 }
@@ -78,60 +76,6 @@ Handle<Value> Vector::New(const Arguments& args) {
   obj->InitializeFields(args.This());
   obj->InitializeValues(args.This(), args[0]);
 
-  return args.This();
-}
-
-Handle<Value> Vector::Index(const Arguments& args) {
-  if (args.Length() < 1) {
-    return ThrowException(Exception::Error(String::New("index(value) takes at least one argument.")));
-  }
-
-  HandleScope scope;
-  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  Handle<Array> array = Array::New();
-  ValueComparator comparator;
-  for (int i = 0; i < args.Length(); i++) {
-    Storage::iterator it = obj->storage.begin();
-    int j = 0, index = -1;
-    while (it != obj->storage.end()) {
-      if (!comparator(*it, args[i]) && !comparator(args[i], *it)) {
-        index = j;
-        break;
-      } else {
-        it++;
-        j++;
-      }
-    }
-    if (args.Length() == 1) {
-      return index == -1 ? Undefined() : scope.Close(Number::New(index));
-    } else if (index != -1) {
-      array->Set(i, Number::New(index));
-    }
-  }
-  return scope.Close(array);
-}
-
-Handle<Value> Vector::Set(const Arguments& args) {
-  CHECK_ITERATING(set, args);
-  if (args.Length() != 2 || !(args[0]->IsUint32())) {
-    return ThrowException(Exception::Error(String::New("set(index, value) takes an integer index and a value.")));
-  }
-  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  if (args[0]->Uint32Value() > obj->storage.size()) {
-    return ThrowException(Exception::Error(String::New("Index is greater than size of this vector.")));
-  }
-
-  HandleScope scope;
-  if (!args[0]->IsUndefined()) {
-    uint32_t index = args[0]->Uint32Value();
-    if (index < obj->storage.size()) {
-      Storage::iterator it = obj->storage.begin() + index;
-      it->Dispose();
-      *it = Persistent<Value>::New(args[1]);
-    } else {
-      obj->storage.push_back(Persistent<Value>::New(args[1]));
-    }
-  }
   return args.This();
 }
 
@@ -173,6 +117,30 @@ Handle<Value> Vector::Reverse(const Arguments& args) {
     if (left != right) {
       swap(*left, *right);
       left++;
+    }
+  }
+  return args.This();
+}
+
+Handle<Value> Vector::Set(const Arguments& args) {
+  CHECK_ITERATING(set, args);
+  if (args.Length() != 2 || !(args[0]->IsUint32())) {
+    return ThrowException(Exception::Error(String::New("set(index, value) takes an integer index and a value.")));
+  }
+  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
+  if (args[0]->Uint32Value() > obj->storage.size()) {
+    return ThrowException(Exception::Error(String::New("Index is greater than size of this vector.")));
+  }
+
+  HandleScope scope;
+  if (!args[0]->IsUndefined()) {
+    uint32_t index = args[0]->Uint32Value();
+    if (index < obj->storage.size()) {
+      Storage::iterator it = obj->storage.begin() + index;
+      it->Dispose();
+      *it = Persistent<Value>::New(args[1]);
+    } else {
+      obj->storage.push_back(Persistent<Value>::New(args[1]));
     }
   }
   return args.This();

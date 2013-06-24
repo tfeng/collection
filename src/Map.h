@@ -27,17 +27,16 @@ class Map : public Collection< map<Persistent<Value>, Persistent<Value>, ValueCo
     virtual bool IsSupportedObject(Handle<Value> value);
     virtual bool IsSupportedType(Handle<Value> value);
 
-  private:
     static Handle<Value> New(const Arguments& args);
 
-    static Handle<Value> ToObject(const Arguments& args);
-    static Handle<Value> ToString(const Arguments& args);
-
     static Handle<Value> Get(const Arguments& args);
+    static Handle<Value> GetAt(const Arguments& args);
     static Handle<Value> Keys(const Arguments& args);
     static Handle<Value> Remove(const Arguments& args);
     static Handle<Value> Set(const Arguments& args);
     static Handle<Value> SetAll(const Arguments& args);
+    static Handle<Value> ToObject(const Arguments& args);
+    static Handle<Value> ToString(const Arguments& args);
 };
 
 
@@ -51,7 +50,6 @@ class MapEntry : public ObjectWrap {
 
     static Persistent<FunctionTemplate> constructor;
 
-  private:
     static Handle<Value> New(const Arguments& args);
 
     static Handle<Value> GetKey(const Arguments& args);
@@ -59,6 +57,7 @@ class MapEntry : public ObjectWrap {
     static Handle<Value> ToObject(const Arguments& args);
     static Handle<Value> ToString(const Arguments& args);
 
+  private:
     Handle<Value> key;
     Handle<Value> value;
 

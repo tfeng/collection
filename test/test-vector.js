@@ -18,103 +18,6 @@ describe('Vector', function() {
     v3 = new Vector();
   });
 
-  describe("#size", function() {
-    it("should return sizes of the vectors", function() {
-      assert.equal(v1.size(), 10);
-      assert.equal(v2.size(), 3);
-      assert.equal(v3.size(), 0);
-      assert.equal(new Vector(v1).size(), 10);
-    });
-
-    it("should throw error if argument is provided", function() {
-      assert.throws(function() {
-        v1.size(1);
-      }, Error)
-    });
-  });
-
-  describe("#has", function() {
-    it("should return existence of values in a vector", function() {
-      assert(v1.has(1));
-      assert(v1.has(3));
-      assert(!v1.has(11));
-      assert(!v2.has(1));
-      assert(v2.has("abc"));
-      assert(v1.has(1, 2, 11), [true, true, false]);
-    });
-
-    it("should throw error if no argument is provided", function() {
-      assert.throws(function() {
-        v1.has();
-      }, Error);
-    });
-  });
-
-  describe("#isEmpty", function() {
-    it("should return whether a vector is empty", function() {
-      assert.equal(v1.isEmpty(), false);
-      assert.equal(v2.isEmpty(), false);
-      assert.equal(v3.isEmpty(), true);
-    });
-
-    it("should throw error if argument is provided", function() {
-      assert.throws(function() {
-        v1.isEmpty("abc");
-      }, Error);
-    });
-  });
-
-  describe("#toArray", function() {
-    it("should return arrays for the vectors", function() {
-      assert.deepEqual(v1.toArray(), array1);
-      assert.deepEqual(v2.toArray(), array2);
-      assert.deepEqual(v3.toArray(), array3);
-
-      assert.deepEqual(new Vector(v1).toArray(), array1);
-      assert.deepEqual(new Vector(v2).toArray(), array2);
-      assert.deepEqual(new Vector(v3).toArray(), array3);
-    });
-  });
-
-  describe("#toString", function() {
-    it("should convert the vectors into strings", function() {
-      assert.equal(v1.toString(), JSON.stringify(array1));
-      assert.equal(v2.toString(), JSON.stringify(array2));
-      assert.equal(v3.toString(), JSON.stringify(array3));
-      assert.equal(new Vector(v2).toString(), JSON.stringify(array2));
-    });
-  });
-
-  describe("#equals", function() {
-    it("should compare equality of this vector with another one", function() {
-      assert(v1.equals(new Vector(array1)));
-      assert(!v1.equals(new Vector([1,2,3])));
-      assert(!v1.equals(new Vector()));
-      assert(v1.equals(v1));
-      assert(v2.equals(new Vector(v2.toArray())));
-      assert(v3.equals(new Vector([])));
-      assert(v3.equals(new Vector()));
-
-      var newVector = new Vector([1,2,3]);
-      v1.add(newVector);
-      array1.push(newVector);
-      assert(v1.equals(new Vector(array1)));
-
-      v2.add(newVector);
-      array2.push(new Vector(newVector));
-      assert(v2.equals(new Vector(array2)));
-    });
-
-    it("should throw error if not exactly one argument is provided", function() {
-      assert.throws(function() {
-        v1.equals();
-      }, Error);
-      assert.throws(function() {
-        v1.equals(1, 2);
-      }, Error);
-    });
-  });
-
   describe("#add", function() {
     it("should add new elements to the end of the vectors", function() {
       assert.deepEqual(v1.add(11, 12, 13, 14, 15).toArray(), [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]);
@@ -165,39 +68,6 @@ describe('Vector', function() {
     });
   });
 
-  describe("#get", function() {
-    it("should get elements in each vector one by one", function() {
-      for (var i = 0; i < v1.size(); i++) {
-        assert.equal(v1.get(i), array1[i]);
-      }
-      for (var i = 0; i < v2.size(); i++) {
-        assert.equal(v2.get(i), array2[i]);
-      }
-      for (var i = 0; i < v3.size(); i++) {
-        assert.equal(v3.get(i), array3[i]);
-      }
-    });
-
-    it("should throw error if input is not unsigned integer", function() {
-      assert.throws(function() {
-        v1.get("abc");
-      }, Error);
-      assert.throws(function() {
-        v1.get([]);
-      }, Error);
-      assert.throws(function() {
-        v1.get(-1);
-      }, Error);
-    });
-
-    it("should get multiple elements from a vector at a time", function() {
-      assert.deepEqual(v1.get(0, 1, 2, 3), [1,2,3,4]);
-      assert.deepEqual(v1.get(1, 3, 5, 7, 9), [2,4,6,8,10]);
-      assert.deepEqual(v1.get(undefined), undefined);
-      assert.deepEqual(v1.get(1, undefined, 3, undefined, 5, null, 7, null, 9, 999), [2,,4,,6,,8,,10]);
-    });
-  });
-
   describe("#clear", function() {
     it("should erase all the elements in the vectors", function() {
       assert.deepEqual(v1.clear().toArray(), []);
@@ -211,161 +81,6 @@ describe('Vector', function() {
     it("should throw error if argument is provided", function() {
       assert.throws(function() {
         v1.clear(1);
-      }, Error);
-    });
-  });
-
-  describe("#index", function() {
-    it("should return indexes of elements in the vectors", function() {
-      for (var i = 0; i < v1.size(); i++) {
-        assert.equal(v1.index(i + 1), i);
-      }
-      for (var i = 0; i < v2.size(); i++) {
-        assert.equal(v2.index(array2[i]), i);
-      }
-      for (var i = 0; i < v3.size(); i++) {
-        assert.equal(v3.index(array3[i]), i);
-      }
-    });
-
-    it("should return indexes of multiple elements at a time", function() {
-      assert.deepEqual(v1.index(1,3,5,7), [0,2,4,6]);
-      assert.deepEqual(v1.index(1,3,5,7,9,11,13), [0,2,4,6,8]);
-      assert.deepEqual(v2.index("a","b","g","abc","f"), [,,2,0]);
-    });
-  });
-
-  describe("#set", function() {
-    it("should set elements to new values", function() {
-      assert.deepEqual(v1.set(0, "a").set(1, "b").set(2, "c").toArray(), ["a","b","c",4,5,6,7,8,9,10]);
-      assert.deepEqual(v2.set(2, "xyz").toArray(), ["abc","def","xyz"]);
-      assert.deepEqual(v3.set(0, 1).set(1, 2).set(2, 3).toArray(), [1,2,3]);
-    });
-
-    it("should add an element if the index points to end of the vector", function() {
-      assert.deepEqual(v1.set(10, 999).toArray(), [1,2,3,4,5,6,7,8,9,10,999]);
-      assert.deepEqual(v2.set(3, 999).toArray(), ["abc","def","g",999]);
-    });
-
-    it("should throw error if index is greater than size of the vector", function() {
-      assert.throws(function() {
-        v1.set(v1.size() + 1, 0);
-      }, Error);
-    });
-
-    it("should throw error if index is not unsigned integer", function() {
-      assert.throws(function() {
-        v1.set("a", 0);
-      }, Error);
-      assert.throws(function() {
-        v1.set(-1, 0);
-      }, Error);
-      assert.throws(function() {
-        v1.set(undefined, 0);
-      }, Error);
-    });
-  });
-
-  describe("#reverse", function() {
-    it("should reverse all the elements in the vectors", function() {
-      assert.deepEqual(v1.reverse().toArray(), array1.reverse());
-      assert.deepEqual(v2.reverse().toArray(), array2.reverse());
-      assert.deepEqual(v3.reverse().toArray(), array3.reverse());
-
-      assert.deepEqual(v1.toArray(), array1);
-      assert.deepEqual(v2.toArray(), array2);
-      assert.deepEqual(v3.toArray(), array3);
-    });
-  });
-
-  describe("#remove", function() {
-    it("should remove elements at the specified indexes of the vectors", function() {
-      assert.deepEqual(v1.remove(1, 3, 5).remove(7,9).toArray(), [2,4,6,8,10]);
-      assert.deepEqual(v2.remove("abc", "def").toArray(), ["g"]);
-      assert.deepEqual(v3.remove(0, 1).toArray(), []);
-    });
-
-    it("should allow undefined and null arguments", function() {
-      var array1old = v1.toArray();
-      assert.deepEqual(v1.add(undefined).remove(undefined).toArray(), array1old);
-      assert.deepEqual(v1.add(null).remove(null).toArray(), array1old);
-    });
-  });
-
-  describe("#removeAt", function() {
-    it("should remove elements at the specified indexes of the vectors", function() {
-      assert.deepEqual(v1.removeAt(1, 3, 5).removeAt(7,9).toArray(), [1,3,5,7,8,9,10]);
-      assert.deepEqual(v2.removeAt(0, 1, 2).toArray(), []);
-      assert.deepEqual(v3.removeAt(0, 1).toArray(), []);
-    });
-
-    it("should throw error if index is not unsigned integer", function() {
-      assert.throws(function() {
-        v1.removeAt("a", 0);
-      }, Error);
-      assert.throws(function() {
-        v1.removeAt(-1, 0);
-      }, Error);
-    });
-
-    it("should allow undefined and null arguments", function() {
-      assert.deepEqual(v1.removeAt(undefined).toArray(), v1.toArray());
-      assert.deepEqual(v1.removeAt(null).toArray(), v1.toArray());
-    });
-  });
-
-  describe("#removeRange", function() {
-    it("should remove elements from start (inclusive) to end (exclusive) indexes", function() {
-      assert.deepEqual(v1.removeRange(1, 5).toArray(), [1,6,7,8,9,10]);
-      assert.deepEqual(v1.removeRange(2, 3).toArray(), [1,6,8,9,10]);
-      assert.deepEqual(v1.removeRange(3, 999).toArray(), [1,6,8]);
-      assert.deepEqual(v3.removeRange(3, 999).toArray(), []);
-    });
-
-    it("should throw error if an index is missing or it is not unsigned integer", function() {
-      assert.throws(function() {
-        v1.removeRange(-1, 1);
-      }, Error);
-      assert.throws(function() {
-        v1.removeRange(0, "a");
-      }, Error);
-      assert.throws(function() {
-        v1.removeRange(0, "a");
-      }, Error);
-      assert.throws(function() {
-        v1.removeRange("a", 1);
-      }, Error);
-    });
-  });
-
-  describe("#removeLast", function() {
-    it("should remove elements in the vector (from the end) one by one", function() {
-      while (v1.size() > 0) {
-        array1.pop();
-        assert.deepEqual(v1.removeLast().toArray(), array1);
-      }
-      while (v2.size() > 0) {
-        array2.pop();
-        assert.deepEqual(v2.removeLast().toArray(), array2);
-      }
-      while (v3.size() > 0) {
-        array3.pop();
-        assert.deepEqual(v3.removeLast().toArray(), array3);
-      }
-      assert.equal(v1.size(), 0);
-      assert.equal(v2.size(), 0);
-      assert.equal(v3.size(), 0);
-      assert.deepEqual(v1.removeLast().toArray(), []);
-      assert.deepEqual(v2.removeLast().toArray(), []);
-      assert.deepEqual(v3.removeLast().toArray(), []);
-    });
-
-    it("should throw error if argument is provided", function() {
-      assert.throws(function() {
-        v1.removeLast(1);
-      }, Error);
-      assert.throws(function() {
-        v1.removeLast([]);
       }, Error);
     });
   });
@@ -580,6 +295,416 @@ describe('Vector', function() {
           v1.removeLast();
         });
       }, Error);
+    });
+  });
+
+  describe("#equals", function() {
+    it("should compare equality of this vector with another one", function() {
+      assert(v1.equals(new Vector(array1)));
+      assert(!v1.equals(new Vector([1,2,3])));
+      assert(!v1.equals(new Vector()));
+      assert(v1.equals(v1));
+      assert(v2.equals(new Vector(v2.toArray())));
+      assert(v3.equals(new Vector([])));
+      assert(v3.equals(new Vector()));
+
+      var newVector = new Vector([1,2,3]);
+      v1.add(newVector);
+      array1.push(newVector);
+      assert(v1.equals(new Vector(array1)));
+
+      v2.add(newVector);
+      array2.push(new Vector(newVector));
+      assert(v2.equals(new Vector(array2)));
+    });
+
+    it("should throw error if not exactly one argument is provided", function() {
+      assert.throws(function() {
+        v1.equals();
+      }, Error);
+      assert.throws(function() {
+        v1.equals(1, 2);
+      }, Error);
+    });
+  });
+
+  describe("#filter", function() {
+    it("should return all the values in the vector that satisfy the requirement", function() {
+      assert.deepEqual(v1.filter(function(v) {
+        return v % 2 == 0;
+      }), [2,4,6,8,10]);
+      assert.deepEqual(v1.filter(function(v) {
+        return v < 0;
+      }), []);
+      assert.deepEqual(v2.filter(function(v) {
+        return v.length < 2;
+      }), ["g"]);
+    });
+
+    it("should throw error if a function argument is not given", function() {
+      assert.throws(function() {
+        v1.filter();
+      }, Error);
+      assert.throws(function() {
+        v1.filter(1);
+      }, Error);
+      assert.throws(function() {
+        v1.filter(function(){}, 1);
+      }, Error);
+    });
+  });
+
+  describe("#find", function() {
+    it("should find the first value in the vector that satisfies the requirement", function() {
+      assert.equal(v1.find(function(v) {
+        return v % 2 == 0;
+      }), 2);
+      assert.equal(v1.find(function(v) {
+        return v < 0;
+      }), undefined);
+      assert.equal(v2.find(function(v) {
+        return v.length < 2;
+      }), "g");
+    });
+
+    it("should throw error if a function argument is not given", function() {
+      assert.throws(function() {
+        v1.find();
+      }, Error);
+      assert.throws(function() {
+        v1.find(1);
+      }, Error);
+      assert.throws(function() {
+        v1.find(function(){}, 1);
+      }, Error);
+    });
+  });
+
+  describe("#get", function() {
+    it("should get values in each vector one by one", function() {
+      for (var i = 0; i < v1.size(); i++) {
+        assert.equal(v1.get(i), array1[i]);
+      }
+      for (var i = 0; i < v2.size(); i++) {
+        assert.equal(v2.get(i), array2[i]);
+      }
+      for (var i = 0; i < v3.size(); i++) {
+        assert.equal(v3.get(i), array3[i]);
+      }
+    });
+
+    it("should throw error if input is not unsigned integer", function() {
+      assert.throws(function() {
+        v1.get("abc");
+      }, Error);
+      assert.throws(function() {
+        v1.get([]);
+      }, Error);
+      assert.throws(function() {
+        v1.get(-1);
+      }, Error);
+    });
+
+    it("should get multiple elements from a vector at a time", function() {
+      assert.deepEqual(v1.get(0, 1, 2, 3), [1,2,3,4]);
+      assert.deepEqual(v1.get(1, 3, 5, 7, 9), [2,4,6,8,10]);
+      assert.deepEqual(v1.get(undefined), undefined);
+      assert.deepEqual(v1.get(1, undefined, 3, undefined, 5, null, 7, null, 9, 999), [2,,4,,6,,8,,10]);
+    });
+  });
+
+  describe("#has", function() {
+    it("should return existence of values in a vector", function() {
+      assert(v1.has(1));
+      assert(v1.has(3));
+      assert(!v1.has(11));
+      assert(!v2.has(1));
+      assert(v2.has("abc"));
+      assert(v1.has(1, 2, 11), [true, true, false]);
+    });
+
+    it("should throw error if no argument is provided", function() {
+      assert.throws(function() {
+        v1.has();
+      }, Error);
+    });
+  });
+
+  describe("#index", function() {
+    it("should return indexes of elements in the vectors", function() {
+      for (var i = 0; i < v1.size(); i++) {
+        assert.equal(v1.index(i + 1), i);
+      }
+      for (var i = 0; i < v2.size(); i++) {
+        assert.equal(v2.index(array2[i]), i);
+      }
+      for (var i = 0; i < v3.size(); i++) {
+        assert.equal(v3.index(array3[i]), i);
+      }
+    });
+
+    it("should return indexes of multiple elements at a time", function() {
+      assert.deepEqual(v1.index(1,3,5,7), [0,2,4,6]);
+      assert.deepEqual(v1.index(1,3,5,7,9,11,13), [0,2,4,6,8]);
+      assert.deepEqual(v2.index("a","b","g","abc","f"), [,,2,0]);
+    });
+  });
+
+  describe("#isEmpty", function() {
+    it("should return whether a vector is empty", function() {
+      assert.equal(v1.isEmpty(), false);
+      assert.equal(v2.isEmpty(), false);
+      assert.equal(v3.isEmpty(), true);
+    });
+
+    it("should throw error if argument is provided", function() {
+      assert.throws(function() {
+        v1.isEmpty("abc");
+      }, Error);
+    });
+  });
+
+  describe("#map", function() {
+    it("should map values into new values in the vectors", function() {
+      assert.deepEqual(v1.map(function(v) {
+        return v*v;
+      }).toArray(), [1,4,9,16,25,36,49,64,81,100]);
+
+      assert.deepEqual(v1.map(function(v) {
+        return v < 20 ? v : undefined;
+      }).toArray(), [1,4,9,16,undefined,undefined,undefined,undefined,undefined,undefined]);
+
+      assert.deepEqual(v2.map(function(v) {
+        return v.length;
+      }).toArray(), [3, 3, 1]);
+    });
+
+    it("should throw error if a function argument is not given", function() {
+      assert.throws(function() {
+        v1.map(1);
+      }, Error);
+      assert.throws(function() {
+        v1.map(function(){}, 1);
+      }, Error);
+    });
+  });
+
+  describe("#reduce", function() {
+    it("should reduce a vector into a single value", function() {
+      assert.equal(v1.reduce(function(memo, v) {
+        return memo + v;
+      }, 0), 55);
+
+      assert.equal(v2.reduce(function(memo, v) {
+        return memo + v;
+      }, ""), "abcdefg");
+    });
+
+    it("should throw error if a function argument is not given", function() {
+      assert.throws(function() {
+        v1.reduce();
+      }, Error);
+      assert.throws(function() {
+        v1.reduce(1);
+      }, Error);
+      assert.throws(function() {
+        v1.reduce(function(){}, 1, 2);
+      }, Error);
+    });
+  });
+
+  describe("#reduceRight", function() {
+    it("should reduce a vector from the right into a single value", function() {
+      assert.equal(v1.reduceRight(function(memo, v) {
+        return memo + v;
+      }, 0), 55);
+
+      assert.equal(v2.reduceRight(function(memo, v) {
+        return memo + v;
+      }, ""), "gdefabc");
+    });
+
+    it("should throw error if a function argument is not given", function() {
+      assert.throws(function() {
+        v1.reduceRight();
+      }, Error);
+      assert.throws(function() {
+        v1.reduceRight(1);
+      }, Error);
+      assert.throws(function() {
+        v1.reduceRight(function(){}, 1, 2);
+      }, Error);
+    });
+  });
+
+  describe("#remove", function() {
+    it("should remove elements at the specified indexes of the vectors", function() {
+      assert.deepEqual(v1.remove(1, 3, 5).remove(7,9).toArray(), [2,4,6,8,10]);
+      assert.deepEqual(v2.remove("abc", "def").toArray(), ["g"]);
+      assert.deepEqual(v3.remove(0, 1).toArray(), []);
+    });
+
+    it("should allow undefined and null arguments", function() {
+      var array1old = v1.toArray();
+      assert.deepEqual(v1.add(undefined).remove(undefined).toArray(), array1old);
+      assert.deepEqual(v1.add(null).remove(null).toArray(), array1old);
+    });
+  });
+
+  describe("#removeAt", function() {
+    it("should remove elements at the specified indexes of the vectors", function() {
+      assert.deepEqual(v1.removeAt(1, 3, 5).removeAt(7,9).toArray(), [1,3,5,7,8,9,10]);
+      assert.deepEqual(v2.removeAt(0, 1, 2).toArray(), []);
+      assert.deepEqual(v3.removeAt(0, 1).toArray(), []);
+    });
+
+    it("should throw error if index is not unsigned integer", function() {
+      assert.throws(function() {
+        v1.removeAt("a", 0);
+      }, Error);
+      assert.throws(function() {
+        v1.removeAt(-1, 0);
+      }, Error);
+    });
+
+    it("should allow undefined and null arguments", function() {
+      assert.deepEqual(v1.removeAt(undefined).toArray(), v1.toArray());
+      assert.deepEqual(v1.removeAt(null).toArray(), v1.toArray());
+    });
+  });
+
+  describe("#removeLast", function() {
+    it("should remove elements in the vector (from the end) one by one", function() {
+      while (v1.size() > 0) {
+        array1.pop();
+        assert.deepEqual(v1.removeLast().toArray(), array1);
+      }
+      while (v2.size() > 0) {
+        array2.pop();
+        assert.deepEqual(v2.removeLast().toArray(), array2);
+      }
+      while (v3.size() > 0) {
+        array3.pop();
+        assert.deepEqual(v3.removeLast().toArray(), array3);
+      }
+      assert.equal(v1.size(), 0);
+      assert.equal(v2.size(), 0);
+      assert.equal(v3.size(), 0);
+      assert.deepEqual(v1.removeLast().toArray(), []);
+      assert.deepEqual(v2.removeLast().toArray(), []);
+      assert.deepEqual(v3.removeLast().toArray(), []);
+    });
+
+    it("should throw error if argument is provided", function() {
+      assert.throws(function() {
+        v1.removeLast(1);
+      }, Error);
+      assert.throws(function() {
+        v1.removeLast([]);
+      }, Error);
+    });
+  });
+
+  describe("#removeRange", function() {
+    it("should remove elements from start (inclusive) to end (exclusive) indexes", function() {
+      assert.deepEqual(v1.removeRange(1, 5).toArray(), [1,6,7,8,9,10]);
+      assert.deepEqual(v1.removeRange(2, 3).toArray(), [1,6,8,9,10]);
+      assert.deepEqual(v1.removeRange(3, 999).toArray(), [1,6,8]);
+      assert.deepEqual(v3.removeRange(3, 999).toArray(), []);
+    });
+
+    it("should throw error if an index is missing or it is not unsigned integer", function() {
+      assert.throws(function() {
+        v1.removeRange(-1, 1);
+      }, Error);
+      assert.throws(function() {
+        v1.removeRange(0, "a");
+      }, Error);
+      assert.throws(function() {
+        v1.removeRange(0, "a");
+      }, Error);
+      assert.throws(function() {
+        v1.removeRange("a", 1);
+      }, Error);
+    });
+  });
+
+  describe("#reverse", function() {
+    it("should reverse all the elements in the vectors", function() {
+      assert.deepEqual(v1.reverse().toArray(), array1.reverse());
+      assert.deepEqual(v2.reverse().toArray(), array2.reverse());
+      assert.deepEqual(v3.reverse().toArray(), array3.reverse());
+
+      assert.deepEqual(v1.toArray(), array1);
+      assert.deepEqual(v2.toArray(), array2);
+      assert.deepEqual(v3.toArray(), array3);
+    });
+  });
+
+  describe("#set", function() {
+    it("should set elements to new values", function() {
+      assert.deepEqual(v1.set(0, "a").set(1, "b").set(2, "c").toArray(), ["a","b","c",4,5,6,7,8,9,10]);
+      assert.deepEqual(v2.set(2, "xyz").toArray(), ["abc","def","xyz"]);
+      assert.deepEqual(v3.set(0, 1).set(1, 2).set(2, 3).toArray(), [1,2,3]);
+    });
+
+    it("should add an element if the index points to end of the vector", function() {
+      assert.deepEqual(v1.set(10, 999).toArray(), [1,2,3,4,5,6,7,8,9,10,999]);
+      assert.deepEqual(v2.set(3, 999).toArray(), ["abc","def","g",999]);
+    });
+
+    it("should throw error if index is greater than size of the vector", function() {
+      assert.throws(function() {
+        v1.set(v1.size() + 1, 0);
+      }, Error);
+    });
+
+    it("should throw error if index is not unsigned integer", function() {
+      assert.throws(function() {
+        v1.set("a", 0);
+      }, Error);
+      assert.throws(function() {
+        v1.set(-1, 0);
+      }, Error);
+      assert.throws(function() {
+        v1.set(undefined, 0);
+      }, Error);
+    });
+  });
+
+  describe("#size", function() {
+    it("should return sizes of the vectors", function() {
+      assert.equal(v1.size(), 10);
+      assert.equal(v2.size(), 3);
+      assert.equal(v3.size(), 0);
+      assert.equal(new Vector(v1).size(), 10);
+    });
+
+    it("should throw error if argument is provided", function() {
+      assert.throws(function() {
+        v1.size(1);
+      }, Error)
+    });
+  });
+
+  describe("#toArray", function() {
+    it("should return arrays for the vectors", function() {
+      assert.deepEqual(v1.toArray(), array1);
+      assert.deepEqual(v2.toArray(), array2);
+      assert.deepEqual(v3.toArray(), array3);
+
+      assert.deepEqual(new Vector(v1).toArray(), array1);
+      assert.deepEqual(new Vector(v2).toArray(), array2);
+      assert.deepEqual(new Vector(v3).toArray(), array3);
+    });
+  });
+
+  describe("#toString", function() {
+    it("should convert the vectors into strings", function() {
+      assert.equal(v1.toString(), JSON.stringify(array1));
+      assert.equal(v2.toString(), JSON.stringify(array2));
+      assert.equal(v3.toString(), JSON.stringify(array3));
+      assert.equal(new Vector(v2).toString(), JSON.stringify(array2));
     });
   });
 });

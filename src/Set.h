@@ -24,7 +24,6 @@ class Set : public IndexedCollection< set<Persistent<Value>, ValueComparator> > 
   protected:
     virtual void InitializeFields(Handle<Object> thisObject);
 
-  private:
     static Handle<Value> New(const Arguments& args);
 
     static Handle<Value> Remove(const Arguments& args);

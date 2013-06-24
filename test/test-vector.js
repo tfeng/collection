@@ -78,10 +78,10 @@ describe('Vector', function() {
 
   describe("#toString", function() {
     it("should convert the vectors into strings", function() {
-      assert.equal(v1.toString(), array1.toString());
-      assert.equal(v2.toString(), array2.toString());
-      assert.equal(v3.toString(), array3.toString());
-      assert.equal(new Vector(v2).toString(), array2.toString());
+      assert.equal(v1.toString(), JSON.stringify(array1));
+      assert.equal(v2.toString(), JSON.stringify(array2));
+      assert.equal(v3.toString(), JSON.stringify(array3));
+      assert.equal(new Vector(v2).toString(), JSON.stringify(array2));
     });
   });
 

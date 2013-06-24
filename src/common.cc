@@ -162,11 +162,17 @@ template <class Storage> Collection<Storage>::~Collection() {
 }
 
 template <class Storage> void Collection<Storage>::InitializeFields(Handle<Object> thisObject) {
+  thisObject->Set(String::NewSymbol("get"), FunctionTemplate::New(Get)->GetFunction());
   thisObject->Set(String::NewSymbol("has"), FunctionTemplate::New(Has)->GetFunction());
   thisObject->Set(String::NewSymbol("isEmpty"), FunctionTemplate::New(IsEmpty)->GetFunction());
   thisObject->Set(String::NewSymbol("size"), FunctionTemplate::New(Size)->GetFunction());
   thisObject->Set(String::NewSymbol("equals"), FunctionTemplate::New(Equals)->GetFunction());
+  thisObject->Set(String::NewSymbol("removeAt"), FunctionTemplate::New(RemoveAt)->GetFunction());
+  thisObject->Set(String::NewSymbol("removeRange"), FunctionTemplate::New(RemoveRange)->GetFunction());
+  thisObject->Set(String::NewSymbol("removeLast"), FunctionTemplate::New(RemoveLast)->GetFunction());
   thisObject->Set(String::NewSymbol("clear"), FunctionTemplate::New(Clear)->GetFunction());
+  thisObject->Set(String::NewSymbol("toArray"), FunctionTemplate::New(ToArray)->GetFunction());
+  thisObject->Set(String::NewSymbol("toString"), FunctionTemplate::New(ToString)->GetFunction());
 
   thisObject->Set(String::NewSymbol("each"), FunctionTemplate::New(Each)->GetFunction());
   thisObject->Set(String::NewSymbol("reduce"), FunctionTemplate::New(Reduce)->GetFunction());
@@ -205,6 +211,46 @@ template <class Storage> bool Collection<Storage>::operator<(const Collection<St
     }
   }
   return it1 == storage.end() && it2 != other.storage.end();
+}
+
+template <class Storage> Handle<Value> Collection<Storage>::Get(const Arguments& args) {
+  if (args.Length() == 0) {
+    return ThrowException(Exception::Error(String::New("get(index, ...) takes at least one argument.")));
+  }
+  for (int i = 0; i < args.Length(); i++) {
+    Handle<Value> arg = args[i];
+    if (!(arg->IsUndefined()) && !(arg->IsNull()) && !(arg->IsUint32())) {
+      return ThrowException(Exception::Error(String::New("get(index, ...) takes only integer arguments.")));
+    }
+  }
+
+  HandleScope scope;
+  Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
+  if (args.Length() == 1) {
+    if (args[0]->IsUint32()) {
+      uint32_t index = args[0]->Uint32Value();
+      if (index < obj->storage.size()) {
+        typename Storage::const_iterator it = obj->storage.begin();
+        advance(it, index);
+        return scope.Close(Local<Value>::New(obj->GetValue(*it)));
+      }
+    }
+  } else {
+    Handle<Array> array = Array::New();
+    for (int i = 0; i < args.Length(); i++) {
+      Handle<Value> arg = args[i];
+      if (arg->IsUint32()) {
+        uint32_t index = arg->Uint32Value();
+        if (index < obj->storage.size()) {
+          typename Storage::const_iterator it = obj->storage.begin();
+          advance(it, index);
+          array->Set(i, Local<Value>::New(obj->GetValue(*it)));
+        }
+      }
+    }
+    return scope.Close(array);
+  }
+  return Undefined();
 }
 
 template <class Storage> Handle<Value> Collection<Storage>::Has(const Arguments& args) {
@@ -273,6 +319,84 @@ template <class Storage> Handle<Value> Collection<Storage>::Equals(const Argumen
   }
 }
 
+template <class Storage> Handle<Value> Collection<Storage>::RemoveAt(const Arguments& args) {
+  CHECK_ITERATING(removeAt, args);
+  if (args.Length() == 0) {
+    return ThrowException(Exception::Error(String::New("removeAt(index, ...) takes at least one argument.")));
+  }
+  for (int i = 0; i < args.Length(); i++) {
+    Handle<Value> arg = args[i];
+    if (!(arg->IsUndefined()) && !(arg->IsNull()) && !(arg->IsUint32())) {
+      return ThrowException(Exception::Error(String::New("removeAt(index, ...) takes only integer arguments.")));
+    }
+  }
+
+  HandleScope scope;
+  Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
+  for (int i = 0, removed = 0; i < args.Length(); i++) {
+    Handle<Value> arg = args[i];
+    if (arg->IsUint32()) {
+      uint32_t index = arg->Uint32Value() - removed;
+      if (index < obj->storage.size()) {
+        typename Storage::iterator it = obj->storage.begin();
+        advance(it,  index);
+        CollectionUtil::Dispose(*it);
+        obj->storage.erase(it);
+        removed++;
+      }
+    }
+  }
+  return args.This();
+}
+
+template <class Storage> Handle<Value> Collection<Storage>::RemoveRange(const Arguments& args) {
+  CHECK_ITERATING(removeRange, args);
+  if (args.Length() != 2) {
+    return ThrowException(Exception::Error(String::New("removeRange(start, end) takes two arguments.")));
+  }
+  if (!(args[0]->IsUint32()) || !(args[1]->IsUint32())) {
+    return ThrowException(Exception::Error(String::New("removeRange(start, end) takes only integer arguments.")));
+  }
+
+  HandleScope scope;
+  Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
+  size_t start = args[0]->Uint32Value();
+  size_t end = args[1]->Uint32Value();
+  if (end > obj->storage.size()) {
+    end = obj->storage.size();
+  }
+  if (obj->storage.size() == 0 || start >= obj->storage.size() || end <= start) {
+    return args.This();
+  }
+
+  typename Storage::iterator beginIt = obj->storage.begin();
+  advance(beginIt, start);
+  typename Storage::iterator endIt = obj->storage.begin();
+  advance(endIt, end);
+  typename Storage::iterator it = beginIt;
+  while (it != endIt && it != obj->storage.end()) {
+    CollectionUtil::Dispose(*it++);
+  }
+
+  obj->storage.erase(beginIt, endIt);
+  return args.This();
+}
+
+template <class Storage> Handle<Value> Collection<Storage>::RemoveLast(const Arguments& args) {
+  CHECK_ITERATING(removeLast, args);
+  CHECK_DOES_NOT_TAKE_ARGUMENT(removeLast, args);
+
+  HandleScope scope;
+  Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
+  if (obj->storage.size() > 0) {
+    typename Storage::iterator it = obj->storage.end();
+    --it;
+    CollectionUtil::Dispose(*it);
+    obj->storage.erase(it);
+  }
+  return args.This();
+}
+
 template <class Storage> Handle<Value> Collection<Storage>::Clear(const Arguments& args) {
   CHECK_ITERATING(clear, args);
   CHECK_DOES_NOT_TAKE_ARGUMENT(clear, args);
@@ -287,6 +411,24 @@ template <class Storage> Handle<Value> Collection<Storage>::Clear(const Argument
 
   obj->storage.clear();
   return args.This();
+}
+
+template <class Storage> Handle<Value> Collection<Storage>::ToArray(const Arguments& args) {
+  HandleScope scope;
+  Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
+  Local<Array> array = Array::New((uint32_t) obj->storage.size());
+  typename Storage::iterator it = obj->storage.begin();
+  for (uint32_t i = 0; it != obj->storage.end(); it++, i++) {
+    array->Set(i, obj->GetValue(*it));
+  }
+  return scope.Close(array);
+}
+
+template <class Storage> Handle<Value> Collection<Storage>::ToString(const Arguments& args) {
+  CHECK_DOES_NOT_TAKE_ARGUMENT(toString, args);
+
+  HandleScope scope;
+  return scope.Close(CollectionUtil::Stringify(ToArray(args)));
 }
 
 template <class Storage> Handle<Value> Collection<Storage>::Each(const Arguments& args) {
@@ -440,12 +582,8 @@ template <class Storage> Handle<Value> Collection<Storage>::_Filter(const Argume
 template <class Storage> void IndexedCollection<Storage>::InitializeFields(Handle<Object> thisObject) {
   Collection<Storage>::InitializeFields(thisObject);
 
-  thisObject->Set(String::NewSymbol("toArray"), FunctionTemplate::New(ToArray)->GetFunction());
-  thisObject->Set(String::NewSymbol("toString"), FunctionTemplate::New(ToString)->GetFunction());
-
   thisObject->Set(String::NewSymbol("add"), FunctionTemplate::New(Add)->GetFunction());
   thisObject->Set(String::NewSymbol("addAll"), FunctionTemplate::New(AddAll)->GetFunction());
-  thisObject->Set(String::NewSymbol("get"), FunctionTemplate::New(Get)->GetFunction());
 }
 
 template <class Storage> void IndexedCollection<Storage>::InitializeValues(Handle<Object> thisObject, Handle<Value> argument) {
@@ -503,24 +641,6 @@ template <class Storage> bool IndexedCollection<Storage>::IsSupportedType(Handle
   }
 
   return IsSupportedObject(value);
-}
-
-template <class Storage> Handle<Value> IndexedCollection<Storage>::ToArray(const Arguments& args) {
-  HandleScope scope;
-  IndexedCollection<Storage>* obj = ObjectWrap::Unwrap< IndexedCollection<Storage> >(args.This());
-  Local<Array> array = Array::New((uint32_t) obj->storage.size());
-  typename Storage::iterator it = obj->storage.begin();
-  for (uint32_t i = 0; it != obj->storage.end(); it++, i++) {
-    array->Set(i, obj->GetValue(*it));
-  }
-  return scope.Close(array);
-}
-
-template <class Storage> Handle<Value> IndexedCollection<Storage>::ToString(const Arguments& args) {
-  CHECK_DOES_NOT_TAKE_ARGUMENT(toString, args);
-
-  HandleScope scope;
-  return scope.Close(ToArray(args)->ToString());
 }
 
 template <class Storage> void IndexedCollection<Storage>::AddValue(Handle<Object> collection, Handle<Value> value) {
@@ -606,46 +726,6 @@ template <class Storage> Handle<Value> IndexedCollection<Storage>::AddAll(const 
   return args.This();
 }
 
-template <class Storage> Handle<Value> IndexedCollection<Storage>::Get(const Arguments& args) {
-  if (args.Length() == 0) {
-    return ThrowException(Exception::Error(String::New("get(index, ...) takes at least one argument.")));
-  }
-  for (int i = 0; i < args.Length(); i++) {
-    Handle<Value> arg = args[i];
-    if (!(arg->IsUndefined()) && !(arg->IsNull()) && !(arg->IsUint32())) {
-      return ThrowException(Exception::Error(String::New("get(index, ...) takes only integer arguments.")));
-    }
-  }
-
-  HandleScope scope;
-  IndexedCollection<Storage>* obj = ObjectWrap::Unwrap< IndexedCollection<Storage> >(args.This());
-  if (args.Length() == 1) {
-    if (args[0]->IsUint32()) {
-      uint32_t index = args[0]->Uint32Value();
-      if (index < obj->storage.size()) {
-        typename Storage::const_iterator it = obj->storage.begin();
-        advance(it, index);
-        return scope.Close(Local<Value>::New(*it));
-      }
-    }
-  } else {
-    Handle<Array> array = Array::New();
-    for (int i = 0; i < args.Length(); i++) {
-      Handle<Value> arg = args[i];
-      if (arg->IsUint32()) {
-        uint32_t index = arg->Uint32Value();
-        if (index < obj->storage.size()) {
-          typename Storage::const_iterator it = obj->storage.begin();
-          advance(it, index);
-          array->Set(i, Local<Value>::New(*it));
-        }
-      }
-    }
-    return scope.Close(array);
-  }
-  return Undefined();
-}
-
 
 /*
  * class CollectionUtil
@@ -658,6 +738,16 @@ void CollectionUtil::Dispose(Persistent<Value> value) {
 void CollectionUtil::Dispose(pair< Persistent<Value>, Persistent<Value> > pair) {
   pair.first.Dispose();
   pair.second.Dispose();
+}
+
+Handle<Value> CollectionUtil::Stringify(Handle<Value> value) {
+  HandleScope scope;
+  Local<Object> global = Context::GetCurrent()->Global();
+  Local<Object> JSON = global->Get(String::New("JSON"))->ToObject();
+  Handle<Function> stringify = Handle<Function>::Cast(JSON->Get(String::New("stringify")));
+  Handle<Value> parameters[1];
+  parameters[0] = value;
+  return scope.Close(stringify->Call(global, 1, parameters));
 }
 
 

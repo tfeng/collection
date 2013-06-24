@@ -42,11 +42,8 @@ class Vector : public IndexedCollection< InternalVector<Persistent<Value>, Value
     static Handle<Value> Index(const Arguments& args);
 
     static Handle<Value> Set(const Arguments& args);
-    static Handle<Value> Reverse(const Arguments& args);
     static Handle<Value> Remove(const Arguments& args);
-    static Handle<Value> RemoveAt(const Arguments& args);
-    static Handle<Value> RemoveRange(const Arguments& args);
-    static Handle<Value> RemoveLast(const Arguments& args);
+    static Handle<Value> Reverse(const Arguments& args);
 
     static Handle<Value> Each(const Arguments& args);
     static Handle<Value> _Each(const Arguments& args);

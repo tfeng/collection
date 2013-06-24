@@ -1,6 +1,9 @@
 collection.js
 ==========
 
+* auto-gen TOC:
+{:toc}
+
 ### Node.js cross-platform native collection library
 
 JavaScript has limited support for collections. Associate array and objects are normally used in case where lists, sets and maps are needed. Unfortunately, the performance is not always as desired, especially for websites built and run with Node.js that need to be highly efficient.
@@ -62,16 +65,16 @@ undefined
       s = new Set(["a","b","c"]),
       m = new Map({"1":"a","2":"b","3":"c"});
 undefined
-> v.toString()
-'1,2,3'
-> s.toArray()
+> v.toString();
+'[1,2,3]'
+> s.toArray();
 [ 'a', 'b', 'c' ]
 > m.toObject()
 { '1': 'a',
   '2': 'b',
   '3': 'c' }
-> v.each(function(v, m) { m.set(v+1); }).toString()
-'2,3,4'
+> v.each(function(v, m) { m.set(v+1); }).toArray();
+[ 2, 3, 4 ]
 >
 ```
 
@@ -80,24 +83,24 @@ API Documentation
 
 ### Vector
 
-Examples below assume vector `v` was initialized with elements `1, 2, 3, 4`:
+Examples below assume vector `v` is initialized with elements `1, 2, 3, 4`:
 
 ```node
 > var v = new Vector([1,2,3,4]);
 undefined
 > v.toString();
-'1,2,3,4'
+'[1,2,3,4]'
 ```
 
-#### add(value, …)
+#### add(value, ...)
 
 Add one or more values to the end of this vector. If a value is an array or a collection, the same instance of array or collection is added to the vector.
 
 *Return:* This vector.
 
 ```node
-> v.add(5,6,7,8).toString();
-'1,2,3,4,5,6,7,8'
+> v.add(5,6,7,8).toArray();
+[ 1, 2, 3, 4, 5, 6, 7, 8 ]
 ```
 
 #### addAll(object)
@@ -107,11 +110,10 @@ Add all the elements in `object` to the end of this vector. Supported types of `
 *Return:* This vector.
 
 ```node
-> v.addAll(new Vector([5,6,7])).toString()
-'1,2,3,4,5,6,7'
-```
-> v.addAll(["x","y","z"]).toString()
-'1,2,3,4,5,6,7,x,y,z'
+> v.addAll(new Vector([5,6,7])).toArray();
+[ 1, 2, 3, 4, 5, 6, 7 ]
+> v.addAll(["x","y","z"]).toArray();
+[ 1, 2, 3, 4, 5, 6, 7, 'x', 'y', 'z' ]
 ```
 
 #### clear()
@@ -133,16 +135,16 @@ Iterate over elements of this vector, and invoke the `callback` function for eac
 2
 > v.each(function(v, m){if(m.isFirst()) console.log(v);});
 1
-> v.each(function(v, m){console.log(m.index()); m.insertBefore(0);}).toString();
+> v.each(function(v, m){console.log(m.index()); m.insertBefore(0);}).toArray();
 0
 2
 4
 6
-'0,1,0,2,0,3,0,4'
-> v.each(function(v, m){m.set(0);}).toString();
-'0,0,0,0,0,0,0,0'
-> v.each(function(v, m){m.remove();}).toString();
-''
+[ 0, 1, 0, 2, 0, 3, 0, 4 ]
+> v.each(function(v, m){m.set(0);}).toArray();
+[ 0, 0, 0, 0, 0, 0, 0, 0 ]
+> v.each(function(v, m){m.remove();}).toArray();
+[]
 ```
 
 #### equals(object)
@@ -162,6 +164,8 @@ true
 
 Return in an array all elements that make the `callback` function return `true`. The callback function should be of the form `function(v) { ... }`.
 
+*Return:* An array of elements for which the callback function returns `true`.
+
 ```node
 > v.filter(function(v){return v%2==0});
 [ 2, 4 ]
@@ -171,7 +175,7 @@ Return in an array all elements that make the `callback` function return `true`.
 
 Return the first element of this vector that makes the `callback` function return `true`. The callback function should be of the form `function(v) { ... }`.
 
-*Return:* The first element of the vector for which the callback function returns `true`.
+*Return:* The first element of this vector for which the callback function returns `true`.
 
 ```node
 > v.find(function(v){return v%2==0});
@@ -194,7 +198,7 @@ Get elements of this vector at the specified indexes.
 
 #### has(value, ...)
 
-Check whether the given values exist in the vector. The result is an array containing `true` and `false` values.
+Check whether the given values exist in the vector.
 
 *Return:* If only 1 value is given as parameter, `true` or `false`; if multiple values are given, an array of boolean values, each identifying whether the corresponding value exists.
 
@@ -236,10 +240,10 @@ Iterates over all elements of this vector, invoke the `callback` function for ea
 *Return:* This vector.
 
 ```node
-> v.map(function(v){return v*2}).toString();
-'2,4,6,8'
-> v.map(function(v){}).toString();
-',,,'
+> v.map(function(v){return v*2}).toArray();
+[ 2, 4, 6, 8 ]
+> v.map(function(v){}).toArray();
+[ undefined, undefined, undefined, undefined ]
 ```
 
 #### reduce(callback, memo)
@@ -273,8 +277,8 @@ Remove elements from this vector.
 *Return:* This vector.
 
 ```node
-> v.remove(1,3,5).toString()
-'2,4'
+> v.remove(1,3,5).toArray();
+[ 2, 4 ]
 ```
 
 #### removeAt(index, ...)
@@ -284,8 +288,8 @@ Remove elements at the specified indexes from this vector. For any index greater
 *Return:* This vector.
 
 ```node
-> v.removeAt(0,3,5).toString()
-'2,3'
+> v.removeAt(0,3,5).toArray();
+[ 2, 3 ]
 ```
 
 #### removeLast()
@@ -295,10 +299,10 @@ Remove last element of this vector. If this vector is empty, there is no effect.
 *Return:* This vector.
 
 ```node
-> v.removeLast().removeLast().toString();
-'1,2'
-> v.removeLast().removeLast().removeLast().removeLast().toString();
-''
+> v.removeLast().removeLast().toArray();
+[ 1, 2 ]
+> v.removeLast().removeLast().removeLast().removeLast().toArray();
+[]
 ```
 
 #### removeRange(start, end)
@@ -308,14 +312,14 @@ Remove elements between the `start` index (inclusive) and the `end` index (exclu
 *Return:* This vector.
 
 ```node
-> v.removeRange(9,20).toString()
-'1,2,3,4'
-> v.removeRange(0,0).toString()
-'1,2,3,4'
-> v.removeRange(0,1).toString()
-'2,3,4'
-> v.removeRange(1,999).toString()
-'2'
+> v.removeRange(9,20).toArray();
+[ 1, 2, 3, 4 ]
+> v.removeRange(0,0).toArray();
+[ 1, 2, 3, 4 ]
+> v.removeRange(0,1).toArray();
+[ 2, 3, 4 ]
+> v.removeRange(1,999).toArray();
+[ 2 ]
 ```
 
 #### reverse()
@@ -325,10 +329,10 @@ Reverse this vector.
 *Return:* This vector.
 
 ```node
-> v.reverse().toString()
-'4,3,2,1'
-> v.reverse().toString()
-'1,2,3,4'
+> v.reverse().toArray();
+[ 4, 3, 2, 1 ]
+> v.reverse().toArray();
+[ 1, 2, 3, 4 ]
 ```
 
 #### set(index, value)
@@ -338,10 +342,10 @@ Set a new value at a given index. If the index is less than size of this vector,
 *Return:* This vector.
 
 ```node
-> v.set(2,5).toString()
-'1,2,5,4'
-> v.set(4,6).toString()
-'1,2,5,4,6'
+> v.set(2,5).toArray();
+[ 1, 2, 5, 4 ]
+> v.set(4,6).toArray();
+[ 1, 2, 5, 4, 6 ]
 ```
 
 #### size()
@@ -364,21 +368,12 @@ Convert this vector into an array that contains the same elements. If the vector
 ```node
 > v.toArray()
 [ 1, 2, 3, 4 ]
-> v.add(["a", "b"]);
-> v.toArray();
-[ 1,
-  2,
-  3,
-  4,
-  [ 'a', 'b' ] ]
+> v.add(["a", "b"]).toArray();
+[ 1, 2, 3, 4, [ 'a', 'b' ] ]
 > v.toArray()[4].push("c");
 3
 > v.toArray()
-[ 1,
-  2,
-  3,
-  4,
-  [ 'a', 'b', 'c' ] ]
+[ 1, 2, 3, 4, [ 'a', 'b', 'c' ] ]
 ```
 
 #### toString()
@@ -388,6 +383,257 @@ Convert this vector into a string.
 *Return:* A string.
 
 ```node
-> v.toString()
-'1,2,3,4'
+> v.toString();
+'[1,2,3,4]'
+```
+
+### Set
+
+Examples below assume set `s` is initialized with elements `1, 2, 3, 4`:
+
+```node
+> var s = new Set([1,2,3,4]);
+undefined
+> s.toString();
+'[1,2,3,4]'
+```
+
+#### add(value, ...)
+
+Add one or more values to this set, and keep the elements in sorted order. If a value is an array or a collection, the same instance of array or collection is added to the set.
+
+*Return:* This set.
+
+```node
+> s.add(5,6,7,8).toArray();
+[ 1, 2, 3, 4, 5, 6, 7, 8 ]
+> s.add(0,2,4,6,8).toArray()
+[ 0, 1, 2, 3, 4, 5, 6, 7, 8 ]
+```
+
+#### addAll(object)
+
+Add all the elements in `object` to this set, and keep the elements in sorted order. Supported types of `object` parameter are array, vector and set.
+
+*Return:* This set.
+
+```node
+> s.addAll(new Vector([3,4,5,6,7])).toArray();
+[ 1, 2, 3, 4, 5, 6, 7 ]
+> s.addAll(["x","y","z"]).toArray();
+[ 1, 2, 3, 4, 5, 6, 7, 'x', 'y', 'z' ]
+> s.addAll(new Vector([0,1,2,3])).toArray();
+[ 0, 1, 2, 3, 4, 5, 6, 7, 'x', 'y', 'z' ]
+```
+
+#### clear()
+
+Remove all elements from this set.
+
+*Return:* This set.
+
+#### each(callback)
+
+Iterate over elements of this set, and invoke the `callback` function for each element. The callback function should be of the form `function(v) { ... }`. `v` is the element. The callback function may return `false` indicating the iteration should stop immediately. Any other returned value is ignored.
+
+*Return:* This vector.
+
+```node
+> s.each(function(v){if(v%2==0){console.log(v); return false;}});
+2
+```
+
+#### equals(object)
+
+Test whether this set equals the given object. (See vector's `equals` function for definition of equality.)
+
+*Return:* `true` or `false`.
+
+```node
+> s.equals(new Set([4,3,2,1]))
+true
+```
+
+#### filter(callback)
+
+Return in an array all elements that make the `callback` function return `true`. The callback function should be of the form `function(v) { ... }`.
+
+*Return:* An array of elements for which the callback function returns `true`.
+
+```node
+> s.filter(function(v){return v%2==0});
+[ 2, 4 ]
+```
+
+#### find(callback)
+
+Return the first element of this set that makes the `callback` function return `true`. The callback function should be of the form `function(v) { ... }`.
+
+*Return:* The first element of this set for which the callback function returns `true`.
+
+```node
+> s.find(function(v){return v%2==0});
+2
+```
+
+#### get(index, ...)
+
+Get elements of this set at the specified indexes.
+
+*Return:* If only 1 index is given as parameter, element of this set at that index; if multiple indexes are given, an array of elements at those indexes.
+
+```node
+> s.get(0)
+1
+> s.get(0,1,5,3)
+[ 1, 2, , 4 ]
+>
+```
+
+#### has(value, ...)
+
+Check whether the given values exist in the set.
+
+*Return:* If only 1 value is given as parameter, `true` or `false`; if multiple values are given, an array of boolean values, each identifying whether the corresponding value exists.
+
+```node
+> s.has(2,4,6)
+[ true, true, false ]
+```
+
+#### isEmpty()
+
+Test whether the set is empty.
+
+*Return:* `true` or `false`.
+
+```node
+> s.isEmpty()
+false
+```
+
+#### reduce(callback, memo)
+
+Iterates over all elements of this set and invoke the `callback` function for each element. Each time a `memo` value is passed into the callback, and the return value of the callback becomes the memo value of the next iteration. The return value in the last iteration is the return value of the `reduce` function itself. The callback should be of the form `function(memo, v){ ... }`.
+
+*Return:* The return value of the callback function in the last iteration.
+
+```node
+> s.reduce(function(memo, v){return memo+v}, 0);
+10
+> s.reduce(function(memo, v){return memo*v}, 1);
+24
+```
+
+#### reduceRight(callback, memo)
+
+Perform the same function as `reduce`, but iterate elements of this set in reverse order.
+
+*Return:* The return value of the callback function in the last iteration.
+
+```node
+> s.reduceRight(function(memo, v){return v}, 5);
+1
+```
+
+#### remove(value, ...)
+
+Remove elements from this set.
+
+*Return:* This set.
+
+```node
+> s.remove(1,3,5).toArray();
+[ 2, 4 ]
+```
+
+#### removeAt(index, ...)
+
+Remove elements at the specified indexes from this set. For any index greater than size of this set, there is no effect.
+
+*Return:* This set.
+
+```node
+> s.removeAt(0,3,5).toArray();
+[ 2, 3 ]
+```
+
+#### removeLast()
+
+Remove last element of this set. If this set is empty, there is no effect.
+
+*Return:* This vector.
+
+```node
+> s.removeLast().removeLast().toArray();
+[ 1, 2 ]
+> s.removeLast().removeLast().removeLast().removeLast().toArray();
+[]
+```
+
+#### removeRange(start, end)
+
+Remove elements between the `start` index (inclusive) and the `end` index (exclusive). If `start` is greater than or equal to size of this set, there is no effect. If `end` is greater than or equal to size of this set, all elements from `start` index are removed.
+
+*Return:* This vector.
+
+```node
+> s.removeRange(9,20).toArray();
+[ 1, 2, 3, 4 ]
+> s.removeRange(0,0).toArray();
+[ 1, 2, 3, 4 ]
+> s.removeRange(0,1).toArray();
+[ 2, 3, 4 ]
+> s.removeRange(1,999).toArray();
+[ 2 ]
+```
+
+#### size()
+
+Check the size of the set.
+
+*Return:* Number of elements in this set.
+
+```node
+> s.size()
+4
+```
+
+#### toArray()
+
+Convert this set into an array that contains the same elements. If the set contains an array or a collection as its element, the same instance of array or collection will also be an element of the resulting array.
+
+*Return:* An array.
+
+```node
+> s.toArray()
+[ 1, 2, 3, 4 ]
+> s.add(["a", "b"]).toArray();
+[ 1, 2, 3, 4, [ 'a', 'b' ] ]
+> s.toArray()[4].push("c");
+3
+> s.toArray()
+[ 1, 2, 3, 4, [ 'a', 'b', 'c' ] ]
+```
+
+#### toString()
+
+Convert this set into a string.
+
+*Return:* A string.
+
+```node
+> s.toString()
+'[1,2,3,4]'
+```
+
+### Map
+
+Examples below assume set `m` is initialized with entries `{1:"a", 2:"b", 3:"c", 4:"d"}`:
+
+```node
+> var m = new Map({1:"a",2:"b",3:"c",4:"d"});
+undefined
+> m.toString();
+'{"1":"a","2":"b","3":"c","4":"d"}'
 ```

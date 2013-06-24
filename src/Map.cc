@@ -33,6 +33,7 @@ void Map::InitializeFields(Handle<Object> thisObject) {
   thisObject->Set(String::NewSymbol("toObject"), FunctionTemplate::New(ToObject)->GetFunction());
   thisObject->Set(String::NewSymbol("toString"), FunctionTemplate::New(ToString)->GetFunction());
 
+  thisObject->Set(String::NewSymbol("getAt"), thisObject->Get(String::NewSymbol("get")));
   thisObject->Set(String::NewSymbol("get"), FunctionTemplate::New(Get)->GetFunction());
   thisObject->Set(String::NewSymbol("remove"), FunctionTemplate::New(Remove)->GetFunction());
   thisObject->Set(String::NewSymbol("set"), FunctionTemplate::New(Set)->GetFunction());
@@ -118,12 +119,7 @@ Handle<Value> Map::ToString(const Arguments& args) {
   CHECK_DOES_NOT_TAKE_ARGUMENT(toString, args);
 
   HandleScope scope;
-  Local<Object> global = Context::GetCurrent()->Global();
-  Local<Object> JSON = global->Get(String::New("JSON"))->ToObject();
-  Handle<Function> stringify = Handle<Function>::Cast(JSON->Get(String::New("stringify")));
-  Handle<Value> parameters[1];
-  parameters[0] = ToObject(args);
-  return scope.Close(stringify->Call(global, 1, parameters));
+  return scope.Close(CollectionUtil::Stringify(ToObject(args)));
 }
 
 Handle<Value> Map::Get(const Arguments& args) {
@@ -240,6 +236,8 @@ Handle<Value> MapEntry::New(const Arguments& args) {
 
   thisObject->Set(String::NewSymbol("key"), FunctionTemplate::New(GetKey)->GetFunction());
   thisObject->Set(String::NewSymbol("value"), FunctionTemplate::New(GetValue)->GetFunction());
+  thisObject->Set(String::NewSymbol("toObject"), FunctionTemplate::New(ToObject)->GetFunction());
+  thisObject->Set(String::NewSymbol("toString"), FunctionTemplate::New(ToString)->GetFunction());
 
   return args.This();
 }
@@ -258,4 +256,22 @@ Handle<Value> MapEntry::GetValue(const Arguments& args) {
   HandleScope scope;
   MapEntry* obj = ObjectWrap::Unwrap<MapEntry>(args.This());
   return scope.Close(Local<Value>::New(obj->value));
+}
+
+Handle<Value> MapEntry::ToObject(const Arguments& args) {
+  CHECK_DOES_NOT_TAKE_ARGUMENT(value, args);
+
+  HandleScope scope;
+  MapEntry* obj = ObjectWrap::Unwrap<MapEntry>(args.This());
+  Local<Object> result = Object::New();
+  result->Set(String::NewSymbol("key"), obj->key);
+  result->Set(String::NewSymbol("value"), obj->value);
+  return scope.Close(result);
+}
+
+Handle<Value> MapEntry::ToString(const Arguments& args) {
+  CHECK_DOES_NOT_TAKE_ARGUMENT(toString, args);
+
+  HandleScope scope;
+  return scope.Close(CollectionUtil::Stringify(ToObject(args)));
 }

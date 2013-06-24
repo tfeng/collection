@@ -55,6 +55,8 @@ class MapEntry : public ObjectWrap {
 
     static Handle<Value> GetKey(const Arguments& args);
     static Handle<Value> GetValue(const Arguments& args);
+    static Handle<Value> ToObject(const Arguments& args);
+    static Handle<Value> ToString(const Arguments& args);
 
     Handle<Value> key;
     Handle<Value> value;

@@ -79,11 +79,17 @@ template <class Storage> class Collection : public ObjectWrap  {
   private:
     static Handle<Value> New(const Arguments& args);
 
+    static Handle<Value> Get(const Arguments& args);
     static Handle<Value> Has(const Arguments& args);
     static Handle<Value> IsEmpty(const Arguments& args);
     static Handle<Value> Size(const Arguments& args);
     static Handle<Value> Equals(const Arguments& args);
+    static Handle<Value> RemoveAt(const Arguments& args);
+    static Handle<Value> RemoveRange(const Arguments& args);
+    static Handle<Value> RemoveLast(const Arguments& args);
     static Handle<Value> Clear(const Arguments& args);
+    static Handle<Value> ToArray(const Arguments& args);
+    static Handle<Value> ToString(const Arguments& args);
 
     static Handle<Value> Each(const Arguments& args);
     static Handle<Value> _Each(const Arguments& args);
@@ -112,9 +118,6 @@ template <class Storage> class IndexedCollection : public Collection<Storage> {
     virtual bool IsSupportedObject(Handle<Value> value);
     virtual bool IsSupportedType(Handle<Value> value);
 
-    static Handle<Value> ToArray(const Arguments& args);
-    static Handle<Value> ToString(const Arguments& args);
-
     static void AddValue(Handle<Object> collection, Handle<Value> value);
     static void AddValues(Handle<Object> collection, Handle<Array> array);
     static void AddValues(Handle<Object> collection, Handle<Object> other);
@@ -122,7 +125,6 @@ template <class Storage> class IndexedCollection : public Collection<Storage> {
   private:
     static Handle<Value> Add(const Arguments& args);
     static Handle<Value> AddAll(const Arguments& args);
-    static Handle<Value> Get(const Arguments& args);
 };
 
 
@@ -134,6 +136,7 @@ class CollectionUtil {
   public:
     static void Dispose(Persistent<Value> value);
     static void Dispose(pair< Persistent<Value>, Persistent<Value> > pair);
+    static Handle<Value> Stringify(Handle<Value> value);
 };
 
 #endif

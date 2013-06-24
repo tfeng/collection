@@ -47,12 +47,8 @@ void Vector::InitializeFields(Handle<Object> thisObject) {
   thisObject->Set(String::NewSymbol("index"), FunctionTemplate::New(Index)->GetFunction());
 
   thisObject->Set(String::NewSymbol("set"), FunctionTemplate::New(Set)->GetFunction());
-  thisObject->Set(String::NewSymbol("reverse"), FunctionTemplate::New(Reverse)->GetFunction());
   thisObject->Set(String::NewSymbol("remove"), FunctionTemplate::New(Remove)->GetFunction());
-  thisObject->Set(String::NewSymbol("removeAt"), FunctionTemplate::New(RemoveAt)->GetFunction());
-  thisObject->Set(String::NewSymbol("removeRange"), FunctionTemplate::New(RemoveRange)->GetFunction());
-  thisObject->Set(String::NewSymbol("removeLast"), FunctionTemplate::New(RemoveLast)->GetFunction());
-
+  thisObject->Set(String::NewSymbol("reverse"), FunctionTemplate::New(Reverse)->GetFunction());
   thisObject->Set(String::NewSymbol("each"), FunctionTemplate::New(Each)->GetFunction());
   thisObject->Set(String::NewSymbol("map"), FunctionTemplate::New(Map)->GetFunction());
 }
@@ -139,24 +135,6 @@ Handle<Value> Vector::Set(const Arguments& args) {
   return args.This();
 }
 
-Handle<Value> Vector::Reverse(const Arguments& args) {
-  CHECK_ITERATING(reverse, args);
-  CHECK_DOES_NOT_TAKE_ARGUMENT(reverse, args);
-
-  HandleScope scope;
-  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  Storage::iterator left = obj->storage.begin();
-  Storage::iterator right = obj->storage.end();
-  while (left != right) {
-    right--;
-    if (left != right) {
-      swap(*left, *right);
-      left++;
-    }
-  }
-  return args.This();
-}
-
 Handle<Value> Vector::Remove(const Arguments& args) {
   CHECK_ITERATING(remove, args);
   if (args.Length() == 0) {
@@ -164,7 +142,7 @@ Handle<Value> Vector::Remove(const Arguments& args) {
   }
 
   HandleScope scope;
-  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
+  IndexedCollection<Storage>* obj = ObjectWrap::Unwrap< IndexedCollection<Storage> >(args.This());
   ValueComparator comparator;
   for (int i = 0; i < args.Length(); i++) {
     Handle<Value> arg = args[i];
@@ -182,73 +160,20 @@ Handle<Value> Vector::Remove(const Arguments& args) {
   return args.This();
 }
 
-Handle<Value> Vector::RemoveAt(const Arguments& args) {
-  CHECK_ITERATING(removeAt, args);
-  if (args.Length() == 0) {
-    return ThrowException(Exception::Error(String::New("removeAt(index, ...) takes at least one argument.")));
-  }
-  for (int i = 0; i < args.Length(); i++) {
-    Handle<Value> arg = args[i];
-    if (!(arg->IsUndefined()) && !(arg->IsNull()) && !(arg->IsUint32())) {
-      return ThrowException(Exception::Error(String::New("removeAt(index, ...) takes only integer arguments.")));
+Handle<Value> Vector::Reverse(const Arguments& args) {
+  CHECK_ITERATING(reverse, args);
+  CHECK_DOES_NOT_TAKE_ARGUMENT(reverse, args);
+
+  HandleScope scope;
+  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
+  Storage::iterator left = obj->storage.begin();
+  Storage::iterator right = obj->storage.end();
+  while (left != right) {
+    right--;
+    if (left != right) {
+      swap(*left, *right);
+      left++;
     }
-  }
-
-  HandleScope scope;
-  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  for (int i = 0, removed = 0; i < args.Length(); i++) {
-    Handle<Value> arg = args[i];
-    if (arg->IsUint32()) {
-      uint32_t index = arg->Uint32Value() - removed;
-      if (index < obj->storage.size()) {
-        Storage::iterator it = obj->storage.begin() + index;
-        it->Dispose();
-        obj->storage.erase(it);
-        removed++;
-      }
-    }
-  }
-  return args.This();
-}
-
-Handle<Value> Vector::RemoveRange(const Arguments& args) {
-  CHECK_ITERATING(removeRange, args);
-  if (args.Length() != 2) {
-    return ThrowException(Exception::Error(String::New("removeRange(start, end) takes two arguments.")));
-  }
-  if (!(args[0]->IsUint32()) || !(args[1]->IsUint32())) {
-    return ThrowException(Exception::Error(String::New("removeRange(start, end) takes only integer arguments.")));
-  }
-
-  HandleScope scope;
-  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  size_t start = args[0]->Uint32Value();
-  size_t end = args[1]->Uint32Value();
-  if (end > obj->storage.size()) {
-    end = obj->storage.size();
-  }
-  if (obj->storage.size() == 0 || start >= obj->storage.size() || end <= start) {
-    return args.This();
-  }
-
-  Storage::iterator it = obj->storage.begin() + start;
-  while (it != obj->storage.begin() + end && it != obj->storage.end()) {
-    (it++)->Dispose();
-  }
-
-  obj->storage.erase(obj->storage.begin() + start, obj->storage.begin() + end);
-  return args.This();
-}
-
-Handle<Value> Vector::RemoveLast(const Arguments& args) {
-  CHECK_ITERATING(removeLast, args);
-  CHECK_DOES_NOT_TAKE_ARGUMENT(removeLast, args);
-
-  HandleScope scope;
-  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  if (obj->storage.size() > 0) {
-    (obj->storage.end() - 1)->Dispose();
-    obj->storage.pop_back();
   }
   return args.This();
 }

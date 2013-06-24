@@ -72,10 +72,10 @@ describe('Set', function() {
 
   describe("#toString", function() {
     it("should convert the sets into strings", function() {
-      assert.equal(s1.toString(), array1.toString());
-      assert.equal(s2.toString(), array2.toString());
-      assert.equal(s3.toString(), array3.toString());
-      assert.equal(new Set(s2).toString(), array2.toString());
+      assert.equal(s1.toString(), JSON.stringify(array1));
+      assert.equal(s2.toString(), JSON.stringify(array2));
+      assert.equal(s3.toString(), JSON.stringify(array3));
+      assert.equal(new Set(s2).toString(), JSON.stringify(array2));
     });
 
     it("should throw error if argument is provided", function() {
@@ -220,6 +220,84 @@ describe('Set', function() {
       var array1old = s1.toArray();
       assert.deepEqual(s1.add(undefined).remove(undefined).toArray(), array1old);
       assert.deepEqual(s1.add(null).remove(null).toArray(), array1old);
+    });
+  });
+
+  describe("#removeAt", function() {
+    it("should remove elements at the specified indexes of the sets", function() {
+      assert.deepEqual(s1.removeAt(1, 3, 5).removeAt(7,9).toArray(), [1,3,5,7,8,9,10]);
+      assert.deepEqual(s2.removeAt(0, 1, 2).toArray(), []);
+      assert.deepEqual(s3.removeAt(0, 1).toArray(), []);
+    });
+
+    it("should throw error if index is not unsigned integer", function() {
+      assert.throws(function() {
+        s1.removeAt("a", 0);
+      }, Error);
+      assert.throws(function() {
+        s1.removeAt(-1, 0);
+      }, Error);
+    });
+
+    it("should allow undefined and null arguments", function() {
+      assert.deepEqual(s1.removeAt(undefined).toArray(), s1.toArray());
+      assert.deepEqual(s1.removeAt(null).toArray(), s1.toArray());
+    });
+  });
+
+  describe("#removeRange", function() {
+    it("should remove elements from start (inclusive) to end (exclusive) indexes", function() {
+      assert.deepEqual(s1.removeRange(1, 5).toArray(), [1,6,7,8,9,10]);
+      assert.deepEqual(s1.removeRange(2, 3).toArray(), [1,6,8,9,10]);
+      assert.deepEqual(s1.removeRange(3, 999).toArray(), [1,6,8]);
+      assert.deepEqual(s3.removeRange(3, 999).toArray(), []);
+    });
+
+    it("should throw error if an index is missing or it is not unsigned integer", function() {
+      assert.throws(function() {
+        s1.removeRange(-1, 1);
+      }, Error);
+      assert.throws(function() {
+        s1.removeRange(0, "a");
+      }, Error);
+      assert.throws(function() {
+        s1.removeRange(0, "a");
+      }, Error);
+      assert.throws(function() {
+        s1.removeRange("a", 1);
+      }, Error);
+    });
+  });
+
+  describe("#removeLast", function() {
+    it("should remove elements in the vector (from the end) one by one", function() {
+      while (s1.size() > 0) {
+        array1.pop();
+        assert.deepEqual(s1.removeLast().toArray(), array1);
+      }
+      while (s2.size() > 0) {
+        array2.pop();
+        assert.deepEqual(s2.removeLast().toArray(), array2);
+      }
+      while (s3.size() > 0) {
+        array3.pop();
+        assert.deepEqual(v3.removeLast().toArray(), array3);
+      }
+      assert.equal(s1.size(), 0);
+      assert.equal(s2.size(), 0);
+      assert.equal(s3.size(), 0);
+      assert.deepEqual(s1.removeLast().toArray(), []);
+      assert.deepEqual(s2.removeLast().toArray(), []);
+      assert.deepEqual(s3.removeLast().toArray(), []);
+    });
+
+    it("should throw error if argument is provided", function() {
+      assert.throws(function() {
+        s1.removeLast(1);
+      }, Error);
+      assert.throws(function() {
+        s1.removeLast([]);
+      }, Error);
     });
   });
 

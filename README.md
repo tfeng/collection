@@ -1,9 +1,6 @@
 collection.js
 ==========
 
-* auto-gen TOC:
-{:toc}
-
 ### Node.js cross-platform native collection library
 
 JavaScript has limited support for collections. Associate array and objects are normally used in case where lists, sets and maps are needed. Unfortunately, the performance is not always as desired, especially for websites built and run with Node.js that need to be highly efficient.

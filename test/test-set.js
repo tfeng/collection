@@ -1,7 +1,9 @@
 "use strict";
 
 var assert = require("assert"),
-    Set = require("../lib/collection").Set;
+    Map = require("../lib/collection").Map,
+    Set = require("../lib/collection").Set,
+    Vector = require("../lib/collection").Vector;
 
 describe('Set', function() {
   var array1, array2, array3;
@@ -139,6 +141,41 @@ describe('Set', function() {
     });
   });
 
+  describe("#addAll", function() {
+    it("should add all elements of an array to a set", function() {
+      assert.deepEqual(s1.addAll([8,9,10,11,12,13,14,15]).toArray(), [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]);
+      assert.deepEqual(s2.addAll(["f","g","h"]).toArray(), ["abc","def","f","g","h"]);
+    });
+
+    it("should add all elements of a vector to a set", function() {
+      assert.deepEqual(s1.addAll(new Vector([8,9,10,11,12,13,14,15])).toArray(), [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]);
+      assert.deepEqual(s2.addAll(new Vector(["f","g","h"])).toArray(), ["abc","def","f","g","h"]);
+    });
+
+    it("should add all elements of a set to a set", function() {
+      assert.deepEqual(s1.addAll(new Set([8,9,10,11,12,13,14,15])).toArray(), [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]);
+      assert.deepEqual(s2.addAll(new Set(["f","g","h"])).toArray(), ["abc","def","f","g","h"]);
+    });
+
+    it("should throw error if argument is not provided", function() {
+      assert.throws(function() {
+        s1.addAll();
+      }, Error);
+    });
+
+    it("should throw error if argument is not array, vector or set", function() {
+      assert.throws(function() {
+        s1.addAll(1,2,3);
+      }, Error);
+      assert.throws(function() {
+        s1.addAll("a", "b");
+      }, Error);
+      assert.throws(function() {
+        s1.addAll(new Map());
+      }, Error);
+    });
+  });
+
   describe("#get", function() {
     it("should get elements in each set one by one", function() {
       for (var i = 0; i < s1.size(); i++) {
@@ -168,13 +205,7 @@ describe('Set', function() {
       assert.deepEqual(s1.get(0, 1, 2, 3), [1,2,3,4]);
       assert.deepEqual(s1.get(1, 3, 5, 7, 9), [2,4,6,8,10]);
       assert.deepEqual(s1.get(undefined), undefined);
-      var array = [];
-      array[0] = 2;
-      array[2] = 4;
-      array[4] = 6;
-      array[6] = 8;
-      array[8] = 10;
-      assert.deepEqual(s1.get(1, undefined, 3, undefined, 5, null, 7, null, 9, 999), array);
+      assert.deepEqual(s1.get(1, undefined, 3, undefined, 5, null, 7, null, 9, 999), [2,,4,,6,,8,,10]);
     });
   });
 

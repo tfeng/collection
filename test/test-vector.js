@@ -1,6 +1,8 @@
 "use strict";
 
 var assert = require("assert"),
+    Map = require("../lib/collection").Map,
+    Set = require("../lib/collection").Set,
     Vector = require("../lib/collection").Vector;
 
 describe('Vector', function() {
@@ -128,6 +130,41 @@ describe('Vector', function() {
     });
   });
 
+  describe("#addAll", function() {
+    it("should add all elements of an array to a vector", function() {
+      assert.deepEqual(v1.addAll([11,12,13,14,15]).toArray(), [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]);
+      assert.deepEqual(v2.addAll(["f","g","h"]).toArray(), ["abc","def","g","f","g","h"]);
+    });
+
+    it("should add all elements of a vector to a vector", function() {
+      assert.deepEqual(v1.addAll(new Vector([11,12,13,14,15])).toArray(), [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]);
+      assert.deepEqual(v2.addAll(new Vector(["f","g","h"])).toArray(), ["abc","def","g","f","g","h"]);
+    });
+
+    it("should add all elements of a set to a vector", function() {
+      assert.deepEqual(v1.addAll(new Set([11,12,13,14,15])).toArray(), [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]);
+      assert.deepEqual(v2.addAll(new Set(["f","g","h"])).toArray(), ["abc","def","g","f","g","h"]);
+    });
+
+    it("should throw error if argument is not provided", function() {
+      assert.throws(function() {
+        v1.addAll();
+      }, Error);
+    });
+
+    it("should throw error if argument is not array, vector or set", function() {
+      assert.throws(function() {
+        v1.addAll(1,2,3);
+      }, Error);
+      assert.throws(function() {
+        v1.addAll("a", "b");
+      }, Error);
+      assert.throws(function() {
+        v1.addAll(new Map());
+      }, Error);
+    });
+  });
+
   describe("#get", function() {
     it("should get elements in each vector one by one", function() {
       for (var i = 0; i < v1.size(); i++) {
@@ -157,13 +194,7 @@ describe('Vector', function() {
       assert.deepEqual(v1.get(0, 1, 2, 3), [1,2,3,4]);
       assert.deepEqual(v1.get(1, 3, 5, 7, 9), [2,4,6,8,10]);
       assert.deepEqual(v1.get(undefined), undefined);
-      var array = [];
-      array[0] = 2;
-      array[2] = 4;
-      array[4] = 6;
-      array[6] = 8;
-      array[8] = 10;
-      assert.deepEqual(v1.get(1, undefined, 3, undefined, 5, null, 7, null, 9, 999), array);
+      assert.deepEqual(v1.get(1, undefined, 3, undefined, 5, null, 7, null, 9, 999), [2,,4,,6,,8,,10]);
     });
   });
 
@@ -196,13 +227,30 @@ describe('Vector', function() {
         assert.equal(v3.index(array3[i]), i);
       }
     });
+
+    it("should return indexes of multiple elements at a time", function() {
+      assert.deepEqual(v1.index(1,3,5,7), [0,2,4,6]);
+      assert.deepEqual(v1.index(1,3,5,7,9,11,13), [0,2,4,6,8]);
+      assert.deepEqual(v2.index("a","b","g","abc","f"), [,,2,0]);
+    });
   });
 
   describe("#set", function() {
     it("should set elements to new values", function() {
       assert.deepEqual(v1.set(0, "a").set(1, "b").set(2, "c").toArray(), ["a","b","c",4,5,6,7,8,9,10]);
-      assert.deepEqual(v2.set(2, "xyz").set(3, "!@#").toArray(), ["abc","def","xyz"]);
-      assert.deepEqual(v3.set(0, 1).set(1, 2).set(2, 3).toArray(), []);
+      assert.deepEqual(v2.set(2, "xyz").toArray(), ["abc","def","xyz"]);
+      assert.deepEqual(v3.set(0, 1).set(1, 2).set(2, 3).toArray(), [1,2,3]);
+    });
+
+    it("should add an element if the index points to end of the vector", function() {
+      assert.deepEqual(v1.set(10, 999).toArray(), [1,2,3,4,5,6,7,8,9,10,999]);
+      assert.deepEqual(v2.set(3, 999).toArray(), ["abc","def","g",999]);
+    });
+
+    it("should throw error if index is greater than size of the vector", function() {
+      assert.throws(function() {
+        v1.set(v1.size() + 1, 0);
+      }, Error);
     });
 
     it("should throw error if index is not unsigned integer", function() {

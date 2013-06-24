@@ -87,6 +87,14 @@ template <class Storage> class Collection : public ObjectWrap  {
 
     static Handle<Value> Each(const Arguments& args);
     static Handle<Value> _Each(const Arguments& args);
+    static Handle<Value> Reduce(const Arguments& args);
+    static Handle<Value> _Reduce(const Arguments& args);
+    static Handle<Value> ReduceRight(const Arguments& args);
+    static Handle<Value> _ReduceRight(const Arguments& args);
+    static Handle<Value> Find(const Arguments& args);
+    static Handle<Value> _Find(const Arguments& args);
+    static Handle<Value> Filter(const Arguments& args);
+    static Handle<Value> _Filter(const Arguments& args);
 
     friend class CollectionUtil;
     friend class ValueComparator;

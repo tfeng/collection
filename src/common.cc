@@ -169,6 +169,10 @@ template <class Storage> void Collection<Storage>::InitializeFields(Handle<Objec
   thisObject->Set(String::NewSymbol("clear"), FunctionTemplate::New(Clear)->GetFunction());
 
   thisObject->Set(String::NewSymbol("each"), FunctionTemplate::New(Each)->GetFunction());
+  thisObject->Set(String::NewSymbol("reduce"), FunctionTemplate::New(Reduce)->GetFunction());
+  thisObject->Set(String::NewSymbol("reduceRight"), FunctionTemplate::New(ReduceRight)->GetFunction());
+  thisObject->Set(String::NewSymbol("find"), FunctionTemplate::New(Find)->GetFunction());
+  thisObject->Set(String::NewSymbol("filter"), FunctionTemplate::New(Filter)->GetFunction());
 }
 
 template <class Storage> Handle<Value> Collection<Storage>::Iterate(Handle<Value> (*iterator)(const Arguments&), const Arguments& args) {
@@ -314,6 +318,120 @@ template <class Storage> Handle<Value> Collection<Storage>::_Each(const Argument
   return args.This();
 }
 
+template <class Storage> Handle<Value> Collection<Storage>::Reduce(const Arguments& args) {
+  return ObjectWrap::Unwrap< Collection<Storage> >(args.This())->Iterate(_Reduce, args);
+}
+
+template <class Storage> Handle<Value> Collection<Storage>::_Reduce(const Arguments& args) {
+  if (args.Length() != 2 || !(args[0]->IsFunction())) {
+    return ThrowException(Exception::Error(String::New("reduce(function, memo) takes a function argument and a memo argument.")));
+  }
+
+  HandleScope scope;
+  Local<Object> global = Context::GetCurrent()->Global();
+  Local<Function> function = Local<Function>::Cast(args[0]);
+  TryCatch tryCatch;
+  Handle<Value> memo = args[1];
+  Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
+  typename Storage::iterator it = obj->storage.begin();
+  while (it != obj->storage.end()) {
+    Handle<Value> parameters[2];
+    parameters[0] = memo;
+    parameters[1] = obj->GetValue(*it++);
+    memo = function->Call(global, 2, parameters);
+    if (memo.IsEmpty()) {
+      return ThrowException(tryCatch.Exception());
+    }
+  }
+  return scope.Close(memo);
+}
+
+template <class Storage> Handle<Value> Collection<Storage>::ReduceRight(const Arguments& args) {
+  return ObjectWrap::Unwrap< Collection<Storage> >(args.This())->Iterate(_ReduceRight, args);
+}
+
+template <class Storage> Handle<Value> Collection<Storage>::_ReduceRight(const Arguments& args) {
+  if (args.Length() != 2 || !(args[0]->IsFunction())) {
+    return ThrowException(Exception::Error(String::New("reduceRight(function, memo) takes a function argument and a memo argument.")));
+  }
+
+  HandleScope scope;
+  Local<Object> global = Context::GetCurrent()->Global();
+  Local<Function> function = Local<Function>::Cast(args[0]);
+  TryCatch tryCatch;
+  Handle<Value> memo = args[1];
+  Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
+  typename Storage::iterator it = obj->storage.end();
+  while (it != obj->storage.begin()) {
+    Handle<Value> parameters[2];
+    parameters[0] = memo;
+    parameters[1] = obj->GetValue(*--it);
+    memo = function->Call(global, 2, parameters);
+    if (memo.IsEmpty()) {
+      return ThrowException(tryCatch.Exception());
+    }
+  }
+  return scope.Close(memo);
+}
+
+template <class Storage> Handle<Value> Collection<Storage>::Find(const Arguments& args) {
+  return ObjectWrap::Unwrap< Collection<Storage> >(args.This())->Iterate(_Find, args);
+}
+
+template <class Storage> Handle<Value> Collection<Storage>::_Find(const Arguments& args) {
+  if (args.Length() != 1 || !(args[0]->IsFunction())) {
+    return ThrowException(Exception::Error(String::New("find(function) takes a function argument.")));
+  }
+
+  HandleScope scope;
+  Local<Object> global = Context::GetCurrent()->Global();
+  Local<Function> function = Local<Function>::Cast(args[0]);
+  TryCatch tryCatch;
+  Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
+  typename Storage::iterator it = obj->storage.begin();
+  while (it != obj->storage.end()) {
+    Handle<Value> parameters[1];
+    parameters[0] = obj->GetValue(*it++);
+    Handle<Value> result = function->Call(global, 1, parameters);
+    if (result.IsEmpty()) {
+      return ThrowException(tryCatch.Exception());
+    } else if (result->IsTrue()) {
+      return parameters[0];
+    }
+  }
+  return Undefined();
+}
+
+template <class Storage> Handle<Value> Collection<Storage>::Filter(const Arguments& args) {
+  return ObjectWrap::Unwrap< Collection<Storage> >(args.This())->Iterate(_Filter, args);
+}
+
+template <class Storage> Handle<Value> Collection<Storage>::_Filter(const Arguments& args) {
+  if (args.Length() != 1 || !(args[0]->IsFunction())) {
+    return ThrowException(Exception::Error(String::New("find(function) takes a function argument.")));
+  }
+
+  HandleScope scope;
+  Local<Object> global = Context::GetCurrent()->Global();
+  Local<Function> function = Local<Function>::Cast(args[0]);
+  TryCatch tryCatch;
+  Collection<Storage>* obj = ObjectWrap::Unwrap< Collection<Storage> >(args.This());
+  Local<Array> array = Array::New();
+  typename Storage::iterator it = obj->storage.begin();
+  int i = 0;
+  while (it != obj->storage.end()) {
+    Handle<Value> parameters[1];
+    parameters[0] = obj->GetValue(*it++);
+    Handle<Value> result = function->Call(global, 1, parameters);
+    if (result.IsEmpty()) {
+      return ThrowException(tryCatch.Exception());
+    } else if (result->IsTrue()) {
+      array->Set(i++, Local<Value>::New(parameters[0]));
+    }
+  }
+  return scope.Close(array);
+}
+
 
 /*
  * class IndexedCollection
@@ -339,10 +457,18 @@ template <class Storage> void IndexedCollection<Storage>::InitializeValues(Handl
 }
 
 template <class Storage> bool IndexedCollection<Storage>::IsSupportedObject(Handle<Value> value) {
-  if (Set::constructor->HasInstance(value) ||
-      Vector::constructor->HasInstance(value)) {
-    IndexedCollection<Storage>* object = ObjectWrap::Unwrap< IndexedCollection<Storage> >(Handle<Object>::Cast(value));
-    typename Storage::const_iterator it = object->storage.begin();
+  if (Set::constructor->HasInstance(value)) {
+    Set* object = ObjectWrap::Unwrap<Set>(Handle<Object>::Cast(value));
+    Set::Storage::const_iterator it = object->storage.begin();
+    while (it != object->storage.end()) {
+      if (!IsSupportedType(*it++)) {
+        return false;
+      }
+    }
+    return true;
+  } else if (Vector::constructor->HasInstance(value)) {
+    Vector* object = ObjectWrap::Unwrap<Vector>(Handle<Object>::Cast(value));
+    Vector::Storage::const_iterator it = object->storage.begin();
     while (it != object->storage.end()) {
       if (!IsSupportedType(*it++)) {
         return false;
@@ -447,17 +573,35 @@ template <class Storage> Handle<Value> IndexedCollection<Storage>::Add(const Arg
 
 template <class Storage> Handle<Value> IndexedCollection<Storage>::AddAll(const Arguments& args) {
   CHECK_ITERATING(addAll, args);
-  if (args.Length() != 1 || !(args[0]->IsArray())) {
-    return ThrowException(Exception::Error(String::New("addAll(array) takes one array argument.")));
+  IndexedCollection<Storage>* obj = ObjectWrap::Unwrap< IndexedCollection<Storage> >(args.This());
+  if (args.Length() != 1 || (!(args[0]->IsArray()) && !obj->IsSupportedObject(args[0]))) {
+    return ThrowException(Exception::Error(String::New("addAll(object) takes one array or object argument.")));
   }
 
   HandleScope scope;
-  IndexedCollection<Storage>* obj = ObjectWrap::Unwrap< IndexedCollection<Storage> >(args.This());
-  Handle<Array> array = Handle<Array>::Cast(args[0]);
-  typename Storage::iterator end = obj->storage.end();
-  for (uint32_t i = 0; i < array->Length(); i++) {
-    end = obj->storage.insert(end, Persistent<Value>::New(array->Get(i)));
-    end++;
+  if (args[0]->IsArray()) {
+    Handle<Array> array = Handle<Array>::Cast(args[0]);
+    typename Storage::iterator end = obj->storage.end();
+    for (uint32_t i = 0; i < array->Length(); i++) {
+      end = obj->storage.insert(end, Persistent<Value>::New(array->Get(i)));
+      end++;
+    }
+  } else if (Set::constructor->HasInstance(args[0])) {
+    Set* set = ObjectWrap::Unwrap<Set>(Handle<Object>::Cast(args[0]));
+    Set::Storage::iterator it = set->storage.begin();
+    typename Storage::iterator end = obj->storage.end();
+    while (it != set->storage.end()) {
+      end = obj->storage.insert(end, Persistent<Value>::New(*it++));
+      end++;
+    }
+  } else if (Vector::constructor->HasInstance(args[0])) {
+    Vector* set = ObjectWrap::Unwrap<Vector>(Handle<Object>::Cast(args[0]));
+    Vector::Storage::iterator it = set->storage.begin();
+    typename Storage::iterator end = obj->storage.end();
+    while (it != set->storage.end()) {
+      end = obj->storage.insert(end, Persistent<Value>::New(*it++));
+      end++;
+    }
   }
   return args.This();
 }

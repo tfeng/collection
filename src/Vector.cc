@@ -55,10 +55,6 @@ void Vector::InitializeFields(Handle<Object> thisObject) {
 
   thisObject->Set(String::NewSymbol("each"), FunctionTemplate::New(Each)->GetFunction());
   thisObject->Set(String::NewSymbol("map"), FunctionTemplate::New(Map)->GetFunction());
-  thisObject->Set(String::NewSymbol("reduce"), FunctionTemplate::New(Reduce)->GetFunction());
-  thisObject->Set(String::NewSymbol("reduceRight"), FunctionTemplate::New(ReduceRight)->GetFunction());
-  thisObject->Set(String::NewSymbol("find"), FunctionTemplate::New(Find)->GetFunction());
-  thisObject->Set(String::NewSymbol("filter"), FunctionTemplate::New(Filter)->GetFunction());
 }
 
 Handle<Value> Vector::New(const Arguments& args) {
@@ -90,30 +86,33 @@ Handle<Value> Vector::New(const Arguments& args) {
 }
 
 Handle<Value> Vector::Index(const Arguments& args) {
-  if (args.Length() != 1) {
-    return ThrowException(Exception::Error(String::New("index(value) takes one argument.")));
+  if (args.Length() < 1) {
+    return ThrowException(Exception::Error(String::New("index(value) takes at least one argument.")));
   }
 
   HandleScope scope;
   Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  Handle<Value> arg = args[0];
+  Handle<Array> array = Array::New();
   ValueComparator comparator;
-  Storage::iterator it = obj->storage.begin();
-  int i = 0, index = -1;
-  while (it != obj->storage.end()) {
-    if (!comparator(*it, arg) && !comparator(arg, *it)) {
-      index = i;
-      break;
-    } else {
-      it++;
-      i++;
+  for (int i = 0; i < args.Length(); i++) {
+    Storage::iterator it = obj->storage.begin();
+    int j = 0, index = -1;
+    while (it != obj->storage.end()) {
+      if (!comparator(*it, args[i]) && !comparator(args[i], *it)) {
+        index = j;
+        break;
+      } else {
+        it++;
+        j++;
+      }
+    }
+    if (args.Length() == 1) {
+      return index == -1 ? Undefined() : scope.Close(Number::New(index));
+    } else if (index != -1) {
+      array->Set(i, Number::New(index));
     }
   }
-  if (index == -1) {
-    return Undefined();
-  } else {
-    return scope.Close(Number::New(index));
-  }
+  return scope.Close(array);
 }
 
 Handle<Value> Vector::Set(const Arguments& args) {
@@ -121,15 +120,20 @@ Handle<Value> Vector::Set(const Arguments& args) {
   if (args.Length() != 2 || !(args[0]->IsUint32())) {
     return ThrowException(Exception::Error(String::New("set(index, value) takes an integer index and a value.")));
   }
+  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
+  if (args[0]->Uint32Value() > obj->storage.size()) {
+    return ThrowException(Exception::Error(String::New("Index is greater than size of this vector.")));
+  }
 
   HandleScope scope;
-  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
   if (!args[0]->IsUndefined()) {
     uint32_t index = args[0]->Uint32Value();
     if (index < obj->storage.size()) {
       Storage::iterator it = obj->storage.begin() + index;
       it->Dispose();
       *it = Persistent<Value>::New(args[1]);
+    } else {
+      obj->storage.push_back(Persistent<Value>::New(args[1]));
     }
   }
   return args.This();
@@ -337,120 +341,6 @@ Handle<Value> Vector::_Map(const Arguments& args) {
     *it++ = Persistent<Value>::New(result);
   }
   return args.This();
-}
-
-Handle<Value> Vector::Reduce(const Arguments& args) {
-  return ObjectWrap::Unwrap<Vector>(args.This())->Iterate(_Reduce, args);
-}
-
-Handle<Value> Vector::_Reduce(const Arguments& args) {
-  if (args.Length() != 2 || !(args[0]->IsFunction())) {
-    return ThrowException(Exception::Error(String::New("reduce(function, memo) takes a function argument and a memo argument.")));
-  }
-
-  HandleScope scope;
-  Local<Object> global = Context::GetCurrent()->Global();
-  Local<Function> function = Local<Function>::Cast(args[0]);
-  TryCatch tryCatch;
-  Handle<Value> memo = args[1];
-  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  Storage::iterator it = obj->storage.begin();
-  while (it != obj->storage.end()) {
-    Handle<Value> parameters[2];
-    parameters[0] = memo;
-    parameters[1] = *it++;
-    memo = function->Call(global, 2, parameters);
-    if (memo.IsEmpty()) {
-      return ThrowException(tryCatch.Exception());
-    }
-  }
-  return scope.Close(memo);
-}
-
-Handle<Value> Vector::ReduceRight(const Arguments& args) {
-  return ObjectWrap::Unwrap<Vector>(args.This())->Iterate(_ReduceRight, args);
-}
-
-Handle<Value> Vector::_ReduceRight(const Arguments& args) {
-  if (args.Length() != 2 || !(args[0]->IsFunction())) {
-    return ThrowException(Exception::Error(String::New("reduceRight(function, memo) takes a function argument and a memo argument.")));
-  }
-
-  HandleScope scope;
-  Local<Object> global = Context::GetCurrent()->Global();
-  Local<Function> function = Local<Function>::Cast(args[0]);
-  TryCatch tryCatch;
-  Handle<Value> memo = args[1];
-  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  Storage::iterator it = obj->storage.end();
-  while (it != obj->storage.begin()) {
-    Handle<Value> parameters[2];
-    parameters[0] = memo;
-    parameters[1] = *--it;
-    memo = function->Call(global, 2, parameters);
-    if (memo.IsEmpty()) {
-      return ThrowException(tryCatch.Exception());
-    }
-  }
-  return scope.Close(memo);
-}
-
-Handle<Value> Vector::Find(const Arguments& args) {
-  return ObjectWrap::Unwrap<Vector>(args.This())->Iterate(_Find, args);
-}
-
-Handle<Value> Vector::_Find(const Arguments& args) {
-  if (args.Length() != 1 || !(args[0]->IsFunction())) {
-    return ThrowException(Exception::Error(String::New("find(function) takes a function argument.")));
-  }
-
-  HandleScope scope;
-  Local<Object> global = Context::GetCurrent()->Global();
-  Local<Function> function = Local<Function>::Cast(args[0]);
-  TryCatch tryCatch;
-  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  Storage::iterator it = obj->storage.begin();
-  while (it != obj->storage.end()) {
-    Persistent<Value> parameters[1];
-    parameters[0] = *it++;
-    Handle<Value> result = function->Call(global, 1, parameters);
-    if (result.IsEmpty()) {
-      return ThrowException(tryCatch.Exception());
-    } else if (result->IsTrue()) {
-      return parameters[0];
-    }
-  }
-  return Undefined();
-}
-
-Handle<Value> Vector::Filter(const Arguments& args) {
-  return ObjectWrap::Unwrap<Vector>(args.This())->Iterate(_Filter, args);
-}
-
-Handle<Value> Vector::_Filter(const Arguments& args) {
-  if (args.Length() != 1 || !(args[0]->IsFunction())) {
-    return ThrowException(Exception::Error(String::New("find(function) takes a function argument.")));
-  }
-
-  HandleScope scope;
-  Local<Object> global = Context::GetCurrent()->Global();
-  Local<Function> function = Local<Function>::Cast(args[0]);
-  TryCatch tryCatch;
-  Vector* obj = ObjectWrap::Unwrap<Vector>(args.This());
-  Local<Array> array = Array::New();
-  Storage::iterator it = obj->storage.begin();
-  int i = 0;
-  while (it != obj->storage.end()) {
-    Persistent<Value> parameters[1];
-    parameters[0] = *it++;
-    Handle<Value> result = function->Call(global, 1, parameters);
-    if (result.IsEmpty()) {
-      return ThrowException(tryCatch.Exception());
-    } else if (result->IsTrue()) {
-      array->Set(i++, Local<Value>::New(parameters[0]));
-    }
-  }
-  return scope.Close(array);
 }
 
 

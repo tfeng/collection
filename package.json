@@ -1,15 +1,18 @@
 {
   "name": "collection",
   "id": "collection",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Node.js cross-platform native collection library",
   "keywords": [
     "collection",
     "native",
     "util",
-    "vector"
+    "vector",
+    "set",
+    "map"
   ],
   "author": "Thomas Feng <tfeng@berkeley.edu>",
+  "homepage": "http://tfeng.github.io/collection",
   "repository": {
     "type": "git",
     "url": "https://github.com/tfeng/collection.git",

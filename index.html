@@ -1,0 +1,1093 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>collection.js by tfeng</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>collection.js</h1>
+        <p>Node.js cross-platform native collection library</p>
+        <p class="view"><a href="https://github.com/tfeng/collection">View the Project on GitHub <small>tfeng/collection</small></a></p>
+        <ul>
+          <li><a href="https://github.com/tfeng/collection/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/tfeng/collection/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/tfeng/collection">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a name="collectionjs" class="anchor" href="#collectionjs"><span class="octicon octicon-link"></span></a>collection.js</h1>
+
+<h3>
+<a name="nodejs-cross-platform-native-collection-library" class="anchor" href="#nodejs-cross-platform-native-collection-library"><span class="octicon octicon-link"></span></a>Node.js cross-platform native collection library</h3>
+
+<p>JavaScript has limited support for collections. Associate array and objects are normally used in case where lists, sets and maps are needed. Unfortunately, the performance is not always as desired, especially for websites built and run with Node.js that need to be highly efficient.</p>
+
+<p><code>collection.js</code> is a native implementation of such data types as vector, set and map, based on their respective underlying implementation in C++. These data types are highly efficient due to the fact that operations on these data types take advantage of the underlying data structures that represent them, and that most of the heavy-lifting work is done at the C++ level, such as looking up a key in a map and modifying elements of a vector while iterating over them.</p>
+
+<p>Experimental result has shown that in many use cases, <code>collection.js</code> significantly improves not only the time it takes to run an algorithm with intensive data access or manipulation, but also the amount of data objects that can fit in Node.js' process memory.</p>
+
+<ul>
+<li>
+<a href="#overview">Overview</a>
+
+<ul>
+<li>
+<a href="#supported-collection-types">Supported Collection Types</a>
+
+<ul>
+<li><a href="#vector">Vector</a></li>
+<li><a href="#set">Set</a></li>
+<li><a href="#map">Map</a></li>
+</ul>
+</li>
+<li>
+<a href="#setup">Setup</a>
+
+<ul>
+<li><a href="#prerequisite">Prerequisite</a></li>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#testing">Testing</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<a href="#api-documentation">API Documentation</a>
+
+<ul>
+<li>
+<a href="#vector-1">Vector</a>
+
+<ul>
+<li><a href="#addvalue-">add(value, ...)</a></li>
+<li><a href="#addallobject">addAll(object)</a></li>
+<li><a href="#clear">clear()</a></li>
+<li><a href="#eachcallback">each(callback)</a></li>
+<li><a href="#equalsobject">equals(object)</a></li>
+<li><a href="#filtercallback">filter(callback)</a></li>
+<li><a href="#findcallback">find(callback)</a></li>
+<li><a href="#getindex-">get(index, ...)</a></li>
+<li><a href="#hasvalue-">has(value, ...)</a></li>
+<li><a href="#indexvalue-">index(value, ...)</a></li>
+<li><a href="#isempty">isEmpty()</a></li>
+<li><a href="#mapcallback">map(callback)</a></li>
+<li><a href="#reducecallback-memo">reduce(callback, memo)</a></li>
+<li><a href="#reducerightcallback-memo">reduceRight(callback, memo)</a></li>
+<li><a href="#removevalue-">remove(value, ...)</a></li>
+<li><a href="#removeatindex-">removeAt(index, ...)</a></li>
+<li><a href="#removelast">removeLast()</a></li>
+<li><a href="#removerangestart-end">removeRange(start, end)</a></li>
+<li><a href="#reverse">reverse()</a></li>
+<li><a href="#setindex-value">set(index, value)</a></li>
+<li><a href="#size">size()</a></li>
+<li><a href="#toarray">toArray()</a></li>
+<li><a href="#tostring">toString()</a></li>
+</ul>
+</li>
+<li>
+<a href="#set-1">Set</a>
+
+<ul>
+<li><a href="#addvalue--1">add(value, ...)</a></li>
+<li><a href="#addallobject-1">addAll(object)</a></li>
+<li><a href="#clear-1">clear()</a></li>
+<li><a href="#eachcallback-1">each(callback)</a></li>
+<li><a href="#equalsobject-1">equals(object)</a></li>
+<li><a href="#filtercallback-1">filter(callback)</a></li>
+<li><a href="#findcallback-1">find(callback)</a></li>
+<li><a href="#getindex--1">get(index, ...)</a></li>
+<li><a href="#hasvalue--1">has(value, ...)</a></li>
+<li><a href="#indexvalue--1">index(value, ...)</a></li>
+<li><a href="#isempty-1">isEmpty()</a></li>
+<li><a href="#reducecallback-memo-1">reduce(callback, memo)</a></li>
+<li><a href="#reducerightcallback-memo-1">reduceRight(callback, memo)</a></li>
+<li><a href="#removevalue--1">remove(value, ...)</a></li>
+<li><a href="#removeatindex--1">removeAt(index, ...)</a></li>
+<li><a href="#removelast-1">removeLast()</a></li>
+<li><a href="#removerangestart-end-1">removeRange(start, end)</a></li>
+<li><a href="#size-1">size()</a></li>
+<li><a href="#toarray-1">toArray()</a></li>
+<li><a href="#tostring-1">toString()</a></li>
+</ul>
+</li>
+<li>
+<a href="#map-1">Map</a>
+
+<ul>
+<li><a href="#clear-2">clear()</a></li>
+<li><a href="#eachcallback-2">each(callback)</a></li>
+<li><a href="#equalsobject-2">equals(object)</a></li>
+<li><a href="#filtercallback-2">filter(callback)</a></li>
+<li><a href="#findcallback-2">find(callback)</a></li>
+<li><a href="#getkey-">get(key, ...)</a></li>
+<li><a href="#getatindex-">getAt(index, ...)</a></li>
+<li><a href="#haskey-">has(key, ...)</a></li>
+<li><a href="#isempty-2">isEmpty()</a></li>
+<li><a href="#reducecallback-memo-2">reduce(callback, memo)</a></li>
+<li><a href="#reducerightcallback-memo-2">reduceRight(callback, memo)</a></li>
+<li><a href="#removekey-">remove(key, ...)</a></li>
+<li><a href="#removeatindex--2">removeAt(index, ...)</a></li>
+<li><a href="#removelast-2">removeLast()</a></li>
+<li><a href="#removerangestart-end-2">removeRange(start, end)</a></li>
+<li><a href="#setkey-value">set(key, value)</a></li>
+<li><a href="#setallobject">setAll(object)</a></li>
+<li><a href="#size-2">size()</a></li>
+<li><a href="#toarray-2">toArray()</a></li>
+<li><a href="#toobject">toObject()</a></li>
+<li><a href="#tostring-2">toString()</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul><h2>
+<a name="overview" class="anchor" href="#overview"><span class="octicon octicon-link"></span></a>Overview</h2>
+
+<h3>
+<a name="supported-collection-types" class="anchor" href="#supported-collection-types"><span class="octicon octicon-link"></span></a>Supported Collection Types</h3>
+
+<h4>
+<a name="vector" class="anchor" href="#vector"><span class="octicon octicon-link"></span></a>Vector</h4>
+
+<p>With resizable array as its underlying data structure, <code>vector</code> is an ideal choice for random access. Operations of the <code>vector</code> collection type allow users to access elements by index in constant time. The array may potentially grow while new elements are being added to the <code>vector</code>, whereas the amortized time is still constant.</p>
+
+<p>A set of handy functions are provided for processing elements in <code>vector</code>, such as <code>find</code>, <code>filter</code>, <code>map</code> and <code>reduce</code>. Among these, there is also a very useful function <code>each</code>, which not only allows one to iterate over elements in the <code>vector</code>, but also to modify its elements on the fly, in a way iterator in C++ and Java does.</p>
+
+<h4>
+<a name="set" class="anchor" href="#set"><span class="octicon octicon-link"></span></a>Set</h4>
+
+<p>A <code>set</code> is a sorted tree in its data representation. Existence of an element can be tested efficiently by traversing the tree instead of going through all the contained elements. As opposed to <code>hash set</code>, such a data structure does not offer constant lookup time, but it is generally more compact, and does not require a good <code>hash function</code>.</p>
+
+<p><code>Set</code> also provides an <code>each</code> function that can be used to traverse its elements in order (defined below). It, however, does not allows to modify elements on the fly because such modification may alter the traversal.</p>
+
+<h4>
+<a name="map" class="anchor" href="#map"><span class="octicon octicon-link"></span></a>Map</h4>
+
+<p>A <code>map</code> can be viewed as a set of <code>entries</code>. Each entry is a (<code>key</code>, <code>value</code>) pair. No two entries with the same key exist in a <code>map</code>.</p>
+
+<p>Internally, <code>map</code> is represented by a tree sorted by its keys, in a way similar to <code>set</code> that keeps its elements sorted. A <code>map</code>, however, has the additional capability of associating values with keys, but values do not participate in sorting.</p>
+
+<p>The <code>put</code> operation is to put an entry in to the map, so that the key of the entry are inserted into the proper location of the tree. If the same key already exists, its currently associated value will be replaced.</p>
+
+<p><code>Each</code> method of a <code>map</code> can be used to iterate over entries.</p>
+
+<h3>
+<a name="setup" class="anchor" href="#setup"><span class="octicon octicon-link"></span></a>Setup</h3>
+
+<h4>
+<a name="prerequisite" class="anchor" href="#prerequisite"><span class="octicon octicon-link"></span></a>Prerequisite</h4>
+
+<p>See <a href="https://github.com/TooTallNate/node-gyp">node-gyp</a> documentation (under Installation section) for software packages required to be installed before proceeding.</p>
+
+<h4>
+<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h4>
+
+<p>Install <code>collection.js</code> using the following command:</p>
+
+<div class="highlight"><pre><span class="nv">$ </span>npm install collection
+</pre></div>
+
+<h4>
+<a name="testing" class="anchor" href="#testing"><span class="octicon octicon-link"></span></a>Testing</h4>
+
+<p>After installing <code>collection.js</code>, start <code>node</code> to see whether it is working as expected.</p>
+
+<pre lang="node"><code>$ node
+&gt; var Vector = require("collection").Vector,
+      Set = require("collection").Set,
+      Map = require("collection").Map;
+undefined
+&gt; var v = new Vector([1,2,3]),
+      s = new Set(["a","b","c"]),
+      m = new Map({"1":"a","2":"b","3":"c"});
+undefined
+&gt; v.toString();
+'[1,2,3]'
+&gt; s.toArray();
+[ 'a', 'b', 'c' ]
+&gt; m.toObject()
+{ '1': 'a',
+  '2': 'b',
+  '3': 'c' }
+&gt; v.each(function(v, m) { m.set(v+1); }).toArray();
+[ 2, 3, 4 ]
+&gt;
+</code></pre>
+
+<h2>
+<a name="api-documentation" class="anchor" href="#api-documentation"><span class="octicon octicon-link"></span></a>API Documentation</h2>
+
+<h3>
+<a name="vector-1" class="anchor" href="#vector-1"><span class="octicon octicon-link"></span></a>Vector</h3>
+
+<p>Examples below assume vector <code>v</code> is initialized with elements <code>1, 2, 3, 4</code>:</p>
+
+<pre lang="node"><code>&gt; var v = new Vector([1,2,3,4]);
+undefined
+&gt; v.toString();
+'[1,2,3,4]'
+</code></pre>
+
+<h4>
+<a name="addvalue-" class="anchor" href="#addvalue-"><span class="octicon octicon-link"></span></a>add(value, ...)</h4>
+
+<p>Add one or more values to the end of this vector. If a value is an array or a collection, the same instance of array or collection is added to the vector.</p>
+
+<p><em>Return:</em> This vector.</p>
+
+<pre lang="node"><code>&gt; v.add(5,6,7,8).toArray();
+[ 1, 2, 3, 4, 5, 6, 7, 8 ]
+</code></pre>
+
+<h4>
+<a name="addallobject" class="anchor" href="#addallobject"><span class="octicon octicon-link"></span></a>addAll(object)</h4>
+
+<p>Add all the elements in <code>object</code> to the end of this vector. Supported types of <code>object</code> parameter are array, vector and set.</p>
+
+<p><em>Return:</em> This vector.</p>
+
+<pre lang="node"><code>&gt; v.addAll(new Vector([5,6,7])).toArray();
+[ 1, 2, 3, 4, 5, 6, 7 ]
+&gt; v.addAll(["x","y","z"]).toArray();
+[ 1, 2, 3, 4, 5, 6, 7, 'x', 'y', 'z' ]
+</code></pre>
+
+<h4>
+<a name="clear" class="anchor" href="#clear"><span class="octicon octicon-link"></span></a>clear()</h4>
+
+<p>Remove all elements from this vector.</p>
+
+<p><em>Return:</em> This vector.</p>
+
+<pre lang="node"><code>&gt; v.clear().toArray();
+[]
+</code></pre>
+
+<h4>
+<a name="eachcallback" class="anchor" href="#eachcallback"><span class="octicon octicon-link"></span></a>each(callback)</h4>
+
+<p>Iterate over elements of this vector, and invoke the <code>callback</code> function for each element. The callback function should be of the form <code>function(v, m) { ... }</code>. <code>v</code> is the element. <code>m</code> is a <code>vector modifier</code>, which may be used to inspect properties of the iteration as well as modify the vector. The callback function may return <code>false</code> indicating the iteration should stop immediately. Any other returned value is ignored.</p>
+
+<p><em>Vector modifier:</em> It is the object <code>m</code> passed into the callback function for <code>each</code>. It supports the following operations: <code>isFirst()</code> to return whether the current invocation is the first of the iteration. <code>isLast()</code> to return whether the current invocation is the last. <code>index()</code> to return the current index. <code>set(value)</code> to set the substitute the current element. <code>remove()</code> to remove the current element. <code>insertBefore(value, ...)</code> to insert new elements before the current element. <code>insertAfter(value, ...)</code> to insert new elements after the current element. All changes are recorded during the callback executes, and are made only after the callback returns. Newly inserted elements are not included in the iteration.</p>
+
+<p><em>Return:</em> This vector.</p>
+
+<pre lang="node"><code>&gt; v.each(function(v, m){if(v%2==0){console.log(v); return false;}});
+2
+&gt; v.each(function(v, m){if(m.isFirst()) console.log(v);});
+1
+&gt; v.each(function(v, m){console.log(m.index()); m.insertBefore(0);}).toArray();
+0
+2
+4
+6
+[ 0, 1, 0, 2, 0, 3, 0, 4 ]
+&gt; v.each(function(v, m){m.set(0);}).toArray();
+[ 0, 0, 0, 0, 0, 0, 0, 0 ]
+&gt; v.each(function(v, m){m.remove();}).toArray();
+[]
+</code></pre>
+
+<h4>
+<a name="equalsobject" class="anchor" href="#equalsobject"><span class="octicon octicon-link"></span></a>equals(object)</h4>
+
+<p>Test whether this vector equals the given object.</p>
+
+<p><em>Equality:</em> In <code>collection.js</code>, equality is defined as <code>deep equality</code> between two objects, including their types and values. For example, a vector never equals an array because their types are different, though a vector may be converted into an array using the <code>toArray</code> method. Similarly, a vector containing integer value <code>1</code> does not equal anther one containing string <code>"1"</code>. Two vectors equal if and only if the contain equal elements in the same order.</p>
+
+<p><em>Return:</em> <code>true</code> or <code>false</code>.</p>
+
+<pre lang="node"><code>&gt; v.equals(new Vector([1,2,3,4]));
+true
+</code></pre>
+
+<h4>
+<a name="filtercallback" class="anchor" href="#filtercallback"><span class="octicon octicon-link"></span></a>filter(callback)</h4>
+
+<p>Return in an array all elements that make the <code>callback</code> function return <code>true</code>. The callback function should be of the form <code>function(v) { ... }</code>.</p>
+
+<p><em>Return:</em> An array of elements for which the callback function returns <code>true</code>.</p>
+
+<pre lang="node"><code>&gt; v.filter(function(v){return v%2==0});
+[ 2, 4 ]
+</code></pre>
+
+<h4>
+<a name="findcallback" class="anchor" href="#findcallback"><span class="octicon octicon-link"></span></a>find(callback)</h4>
+
+<p>Return the first element of this vector that makes the <code>callback</code> function return <code>true</code>. The callback function should be of the form <code>function(v) { ... }</code>.</p>
+
+<p><em>Return:</em> The first element of this vector for which the callback function returns <code>true</code>.</p>
+
+<pre lang="node"><code>&gt; v.find(function(v){return v%2==0});
+2
+</code></pre>
+
+<h4>
+<a name="getindex-" class="anchor" href="#getindex-"><span class="octicon octicon-link"></span></a>get(index, ...)</h4>
+
+<p>Get elements of this vector at the specified indexes.</p>
+
+<p><em>Return:</em> If only 1 index is given as parameter, element of this vector at that index; if multiple indexes are given, an array of elements at those indexes.</p>
+
+<pre lang="node"><code>&gt; v.get(0)
+1
+&gt; v.get(0,1,5,3)
+[ 1, 2, , 4 ]
+</code></pre>
+
+<h4>
+<a name="hasvalue-" class="anchor" href="#hasvalue-"><span class="octicon octicon-link"></span></a>has(value, ...)</h4>
+
+<p>Check whether the given values exist in the vector.</p>
+
+<p><em>Return:</em> If only 1 value is given as parameter, <code>true</code> or <code>false</code>; if multiple values are given, an array of boolean values, each identifying whether the corresponding value exists.</p>
+
+<pre lang="node"><code>&gt; v.has(2,4,6)
+[ true, true, false ]
+</code></pre>
+
+<h4>
+<a name="indexvalue-" class="anchor" href="#indexvalue-"><span class="octicon octicon-link"></span></a>index(value, ...)</h4>
+
+<p>Return indexes of the specified elements in this vector.</p>
+
+<p><em>Return:</em> If only 1 value is given as parameter, index of that element, or <code>undefined</code> if not found; if multiple values are given, an array of indexes.</p>
+
+<pre lang="node"><code>&gt; v.index(2)
+1
+&gt; v.index(1,3,5,7)
+[ 0, 2 ]
+&gt; v.index(1,5,7,3)
+[ 0, , , 2 ]
+</code></pre>
+
+<h4>
+<a name="isempty" class="anchor" href="#isempty"><span class="octicon octicon-link"></span></a>isEmpty()</h4>
+
+<p>Test whether the vector is empty.</p>
+
+<p><em>Return:</em> <code>true</code> or <code>false</code>.</p>
+
+<pre lang="node"><code>&gt; v.isEmpty();
+false
+</code></pre>
+
+<h4>
+<a name="mapcallback" class="anchor" href="#mapcallback"><span class="octicon octicon-link"></span></a>map(callback)</h4>
+
+<p>Iterates over all elements of this vector, invoke the <code>callback</code> function for each element, and when the callback function returns, replace the current element with a new value. The callback function should be of the form <code>function(v){ ... }</code>. Its returned value substitutes elements of this vector, one at a time.</p>
+
+<p><em>Return:</em> This vector.</p>
+
+<pre lang="node"><code>&gt; v.map(function(v){return v*2}).toArray();
+[ 2, 4, 6, 8 ]
+&gt; v.map(function(v){}).toArray();
+[ undefined, undefined, undefined, undefined ]
+</code></pre>
+
+<h4>
+<a name="reducecallback-memo" class="anchor" href="#reducecallback-memo"><span class="octicon octicon-link"></span></a>reduce(callback, memo)</h4>
+
+<p>Iterates over all elements of this vector and invoke the <code>callback</code> function for each element. Each time a <code>memo</code> value is passed into the callback, and the return value of the callback becomes the memo value of the next iteration. The return value in the last iteration is the return value of the <code>reduce</code> function itself. The callback should be of the form <code>function(memo, v){ ... }</code>.</p>
+
+<p><em>Return:</em> The return value of the callback function in the last iteration.</p>
+
+<pre lang="node"><code>&gt; v.reduce(function(memo, v){return memo+v}, 0);
+10
+&gt; v.reduce(function(memo, v){return memo*v}, 1);
+24
+</code></pre>
+
+<h4>
+<a name="reducerightcallback-memo" class="anchor" href="#reducerightcallback-memo"><span class="octicon octicon-link"></span></a>reduceRight(callback, memo)</h4>
+
+<p>Perform the same function as <code>reduce</code>, but iterate elements of this vector in reverse order.</p>
+
+<p><em>Return:</em> The return value of the callback function in the last iteration.</p>
+
+<pre lang="node"><code>&gt; v.reduceRight(function(memo, v){return v}, 5);
+1
+</code></pre>
+
+<h4>
+<a name="removevalue-" class="anchor" href="#removevalue-"><span class="octicon octicon-link"></span></a>remove(value, ...)</h4>
+
+<p>Remove elements from this vector.</p>
+
+<p><em>Return:</em> This vector.</p>
+
+<pre lang="node"><code>&gt; v.remove(1,3,5).toArray();
+[ 2, 4 ]
+</code></pre>
+
+<h4>
+<a name="removeatindex-" class="anchor" href="#removeatindex-"><span class="octicon octicon-link"></span></a>removeAt(index, ...)</h4>
+
+<p>Remove elements at the specified indexes from this vector. For any index greater than size of this vector, there is no effect.</p>
+
+<p><em>Return:</em> This vector.</p>
+
+<pre lang="node"><code>&gt; v.removeAt(0,3,5).toArray();
+[ 2, 3 ]
+</code></pre>
+
+<h4>
+<a name="removelast" class="anchor" href="#removelast"><span class="octicon octicon-link"></span></a>removeLast()</h4>
+
+<p>Remove last element of this vector. If this vector is empty, there is no effect.</p>
+
+<p><em>Return:</em> This vector.</p>
+
+<pre lang="node"><code>&gt; v.removeLast().removeLast().toArray();
+[ 1, 2 ]
+&gt; v.removeLast().removeLast().removeLast().removeLast().toArray();
+[]
+</code></pre>
+
+<h4>
+<a name="removerangestart-end" class="anchor" href="#removerangestart-end"><span class="octicon octicon-link"></span></a>removeRange(start, end)</h4>
+
+<p>Remove elements between the <code>start</code> index (inclusive) and the <code>end</code> index (exclusive). If <code>start</code> is greater than or equal to size of this vector, there is no effect. If <code>end</code> is greater than or equal to size of this vector, all elements from <code>start</code> index are removed.</p>
+
+<p><em>Return:</em> This vector.</p>
+
+<pre lang="node"><code>&gt; v.removeRange(9,20).toArray();
+[ 1, 2, 3, 4 ]
+&gt; v.removeRange(0,0).toArray();
+[ 1, 2, 3, 4 ]
+&gt; v.removeRange(0,1).toArray();
+[ 2, 3, 4 ]
+&gt; v.removeRange(1,999).toArray();
+[ 2 ]
+</code></pre>
+
+<h4>
+<a name="reverse" class="anchor" href="#reverse"><span class="octicon octicon-link"></span></a>reverse()</h4>
+
+<p>Reverse this vector.</p>
+
+<p><em>Return:</em> This vector.</p>
+
+<pre lang="node"><code>&gt; v.reverse().toArray();
+[ 4, 3, 2, 1 ]
+&gt; v.reverse().toArray();
+[ 1, 2, 3, 4 ]
+</code></pre>
+
+<h4>
+<a name="setindex-value" class="anchor" href="#setindex-value"><span class="octicon octicon-link"></span></a>set(index, value)</h4>
+
+<p>Set a new value at a given index. If the index is less than size of this vector, existing value is substituted by the given new value. If the index equals size of this vector, the given value is added to the end of the vector. If the index is greater than size of this vector, an <code>Error</code> is thrown.</p>
+
+<p><em>Return:</em> This vector.</p>
+
+<pre lang="node"><code>&gt; v.set(2,5).toArray();
+[ 1, 2, 5, 4 ]
+&gt; v.set(4,6).toArray();
+[ 1, 2, 5, 4, 6 ]
+</code></pre>
+
+<h4>
+<a name="size" class="anchor" href="#size"><span class="octicon octicon-link"></span></a>size()</h4>
+
+<p>Check the size of the vector.</p>
+
+<p><em>Return:</em> Number of elements in this vector.</p>
+
+<pre lang="node"><code>&gt; v.size();
+4
+</code></pre>
+
+<h4>
+<a name="toarray" class="anchor" href="#toarray"><span class="octicon octicon-link"></span></a>toArray()</h4>
+
+<p>Convert this vector into an array that contains the same elements. If the vector contains an array or a collection as its element, the same instance of array or collection will also be an element of the resulting array.</p>
+
+<p><em>Return:</em> An array.</p>
+
+<pre lang="node"><code>&gt; v.toArray();
+[ 1, 2, 3, 4 ]
+&gt; v.add(["a", "b"]).toArray();
+[ 1, 2, 3, 4, [ 'a', 'b' ] ]
+&gt; v.toArray()[4].push("c");
+3
+&gt; v.toArray();
+[ 1, 2, 3, 4, [ 'a', 'b', 'c' ] ]
+</code></pre>
+
+<h4>
+<a name="tostring" class="anchor" href="#tostring"><span class="octicon octicon-link"></span></a>toString()</h4>
+
+<p>Convert this vector into a string.</p>
+
+<p><em>Return:</em> A string.</p>
+
+<pre lang="node"><code>&gt; v.toString();
+'[1,2,3,4]'
+</code></pre>
+
+<h3>
+<a name="set-1" class="anchor" href="#set-1"><span class="octicon octicon-link"></span></a>Set</h3>
+
+<p>Examples below assume set <code>s</code> is initialized with elements <code>1, 2, 3, 4</code>:</p>
+
+<pre lang="node"><code>&gt; var s = new Set([1,2,3,4]);
+undefined
+&gt; s.toString();
+'[1,2,3,4]'
+</code></pre>
+
+<h4>
+<a name="addvalue--1" class="anchor" href="#addvalue--1"><span class="octicon octicon-link"></span></a>add(value, ...)</h4>
+
+<p>Add one or more values to this set, and keep the elements in sorted order. If a value is an array or a collection, the same instance of array or collection is added to the set.</p>
+
+<p><em>Return:</em> This set.</p>
+
+<pre lang="node"><code>&gt; s.add(5,6,7,8).toArray();
+[ 1, 2, 3, 4, 5, 6, 7, 8 ]
+&gt; s.add(0,2,4,6,8).toArray()
+[ 0, 1, 2, 3, 4, 5, 6, 7, 8 ]
+</code></pre>
+
+<h4>
+<a name="addallobject-1" class="anchor" href="#addallobject-1"><span class="octicon octicon-link"></span></a>addAll(object)</h4>
+
+<p>Add all the elements in <code>object</code> to this set, and keep the elements in sorted order. Supported types of <code>object</code> parameter are array, vector and set.</p>
+
+<p><em>Return:</em> This set.</p>
+
+<pre lang="node"><code>&gt; s.addAll(new Vector([3,4,5,6,7])).toArray();
+[ 1, 2, 3, 4, 5, 6, 7 ]
+&gt; s.addAll(["x","y","z"]).toArray();
+[ 1, 2, 3, 4, 5, 6, 7, 'x', 'y', 'z' ]
+&gt; s.addAll(new Vector([0,1,2,3])).toArray();
+[ 0, 1, 2, 3, 4, 5, 6, 7, 'x', 'y', 'z' ]
+</code></pre>
+
+<h4>
+<a name="clear-1" class="anchor" href="#clear-1"><span class="octicon octicon-link"></span></a>clear()</h4>
+
+<p>Remove all elements from this set.</p>
+
+<p><em>Return:</em> This set.</p>
+
+<pre lang="node"><code>&gt; s.clear().toArray();
+[]
+</code></pre>
+
+<h4>
+<a name="eachcallback-1" class="anchor" href="#eachcallback-1"><span class="octicon octicon-link"></span></a>each(callback)</h4>
+
+<p>Iterate over elements of this set, and invoke the <code>callback</code> function for each element. The callback function should be of the form <code>function(v) { ... }</code>. <code>v</code> is the element. The callback function may return <code>false</code> indicating the iteration should stop immediately. Any other returned value is ignored.</p>
+
+<p><em>Return:</em> This vector.</p>
+
+<pre lang="node"><code>&gt; s.each(function(v){if(v%2==0){console.log(v); return false;}});
+2
+</code></pre>
+
+<h4>
+<a name="equalsobject-1" class="anchor" href="#equalsobject-1"><span class="octicon octicon-link"></span></a>equals(object)</h4>
+
+<p>Test whether this set equals the given object. (See vector's <code>equals</code> function for definition of equality.)</p>
+
+<p><em>Return:</em> <code>true</code> or <code>false</code>.</p>
+
+<pre lang="node"><code>&gt; s.equals(new Set([4,3,2,1]));
+true
+</code></pre>
+
+<h4>
+<a name="filtercallback-1" class="anchor" href="#filtercallback-1"><span class="octicon octicon-link"></span></a>filter(callback)</h4>
+
+<p>Return in an array all elements that make the <code>callback</code> function return <code>true</code>. The callback function should be of the form <code>function(v) { ... }</code>.</p>
+
+<p><em>Return:</em> An array of elements for which the callback function returns <code>true</code>.</p>
+
+<pre lang="node"><code>&gt; s.filter(function(v){return v%2==0});
+[ 2, 4 ]
+</code></pre>
+
+<h4>
+<a name="findcallback-1" class="anchor" href="#findcallback-1"><span class="octicon octicon-link"></span></a>find(callback)</h4>
+
+<p>Return the first element of this set that makes the <code>callback</code> function return <code>true</code>. The callback function should be of the form <code>function(v) { ... }</code>.</p>
+
+<p><em>Return:</em> The first element of this set for which the callback function returns <code>true</code>.</p>
+
+<pre lang="node"><code>&gt; s.find(function(v){return v%2==0});
+2
+</code></pre>
+
+<h4>
+<a name="getindex--1" class="anchor" href="#getindex--1"><span class="octicon octicon-link"></span></a>get(index, ...)</h4>
+
+<p>Get elements of this set at the specified indexes.</p>
+
+<p><em>Return:</em> If only 1 index is given as parameter, element of this set at that index; if multiple indexes are given, an array of elements at those indexes.</p>
+
+<pre lang="node"><code>&gt; s.get(0)
+1
+&gt; s.get(0,1,5,3)
+[ 1, 2, , 4 ]
+</code></pre>
+
+<h4>
+<a name="hasvalue--1" class="anchor" href="#hasvalue--1"><span class="octicon octicon-link"></span></a>has(value, ...)</h4>
+
+<p>Check whether the given values exist in the set.</p>
+
+<p><em>Return:</em> If only 1 value is given as parameter, <code>true</code> or <code>false</code>; if multiple values are given, an array of boolean values, each identifying whether the corresponding value exists.</p>
+
+<pre lang="node"><code>&gt; s.has(2,4,6)
+[ true, true, false ]
+</code></pre>
+
+<h4>
+<a name="indexvalue--1" class="anchor" href="#indexvalue--1"><span class="octicon octicon-link"></span></a>index(value, ...)</h4>
+
+<p>Return indexes of the specified elements in this set.</p>
+
+<p><em>Return:</em> If only 1 value is given as parameter, index of that element, or <code>undefined</code> if not found; if multiple values are given, an array of indexes.</p>
+
+<pre lang="node"><code>&gt; s.index(2)
+1
+&gt; s.index(1,3,5,7)
+[ 0, 2 ]
+&gt; s.index(1,5,7,3)
+[ 0, , , 2 ]
+</code></pre>
+
+<h4>
+<a name="isempty-1" class="anchor" href="#isempty-1"><span class="octicon octicon-link"></span></a>isEmpty()</h4>
+
+<p>Test whether the set is empty.</p>
+
+<p><em>Return:</em> <code>true</code> or <code>false</code>.</p>
+
+<pre lang="node"><code>&gt; s.isEmpty();
+false
+</code></pre>
+
+<h4>
+<a name="reducecallback-memo-1" class="anchor" href="#reducecallback-memo-1"><span class="octicon octicon-link"></span></a>reduce(callback, memo)</h4>
+
+<p>Iterates over all elements of this set and invoke the <code>callback</code> function for each element. Each time a <code>memo</code> value is passed into the callback, and the return value of the callback becomes the memo value of the next iteration. The return value in the last iteration is the return value of the <code>reduce</code> function itself. The callback should be of the form <code>function(memo, v){ ... }</code>.</p>
+
+<p><em>Return:</em> The return value of the callback function in the last iteration.</p>
+
+<pre lang="node"><code>&gt; s.reduce(function(memo, v){return memo+v}, 0);
+10
+&gt; s.reduce(function(memo, v){return memo*v}, 1);
+24
+</code></pre>
+
+<h4>
+<a name="reducerightcallback-memo-1" class="anchor" href="#reducerightcallback-memo-1"><span class="octicon octicon-link"></span></a>reduceRight(callback, memo)</h4>
+
+<p>Perform the same function as <code>reduce</code>, but iterate elements of this set in reverse order.</p>
+
+<p><em>Return:</em> The return value of the callback function in the last iteration.</p>
+
+<pre lang="node"><code>&gt; s.reduceRight(function(memo, v){return v}, 5);
+1
+</code></pre>
+
+<h4>
+<a name="removevalue--1" class="anchor" href="#removevalue--1"><span class="octicon octicon-link"></span></a>remove(value, ...)</h4>
+
+<p>Remove elements from this set.</p>
+
+<p><em>Return:</em> This set.</p>
+
+<pre lang="node"><code>&gt; s.remove(1,3,5).toArray();
+[ 2, 4 ]
+</code></pre>
+
+<h4>
+<a name="removeatindex--1" class="anchor" href="#removeatindex--1"><span class="octicon octicon-link"></span></a>removeAt(index, ...)</h4>
+
+<p>Remove elements at the specified indexes from this set. For any index greater than size of this set, there is no effect.</p>
+
+<p><em>Return:</em> This set.</p>
+
+<pre lang="node"><code>&gt; s.removeAt(0,3,5).toArray();
+[ 2, 3 ]
+</code></pre>
+
+<h4>
+<a name="removelast-1" class="anchor" href="#removelast-1"><span class="octicon octicon-link"></span></a>removeLast()</h4>
+
+<p>Remove last element of this set. If this set is empty, there is no effect.</p>
+
+<p><em>Return:</em> This set.</p>
+
+<pre lang="node"><code>&gt; s.removeLast().removeLast().toArray();
+[ 1, 2 ]
+&gt; s.removeLast().removeLast().removeLast().removeLast().toArray();
+[]
+</code></pre>
+
+<h4>
+<a name="removerangestart-end-1" class="anchor" href="#removerangestart-end-1"><span class="octicon octicon-link"></span></a>removeRange(start, end)</h4>
+
+<p>Remove elements between the <code>start</code> index (inclusive) and the <code>end</code> index (exclusive). If <code>start</code> is greater than or equal to size of this set, there is no effect. If <code>end</code> is greater than or equal to size of this set, all elements from <code>start</code> index are removed.</p>
+
+<p><em>Return:</em> This set.</p>
+
+<pre lang="node"><code>&gt; s.removeRange(9,20).toArray();
+[ 1, 2, 3, 4 ]
+&gt; s.removeRange(0,0).toArray();
+[ 1, 2, 3, 4 ]
+&gt; s.removeRange(0,1).toArray();
+[ 2, 3, 4 ]
+&gt; s.removeRange(1,999).toArray();
+[ 2 ]
+</code></pre>
+
+<h4>
+<a name="size-1" class="anchor" href="#size-1"><span class="octicon octicon-link"></span></a>size()</h4>
+
+<p>Check the size of the set.</p>
+
+<p><em>Return:</em> Number of elements in this set.</p>
+
+<pre lang="node"><code>&gt; s.size();
+4
+</code></pre>
+
+<h4>
+<a name="toarray-1" class="anchor" href="#toarray-1"><span class="octicon octicon-link"></span></a>toArray()</h4>
+
+<p>Convert this set into an array that contains the same elements. If the set contains an array or a collection as its element, the same instance of array or collection will also be an element of the resulting array.</p>
+
+<p><em>Return:</em> An array.</p>
+
+<pre lang="node"><code>&gt; s.toArray();
+[ 1, 2, 3, 4 ]
+&gt; s.add(["a", "b"]).toArray();
+[ 1, 2, 3, 4, [ 'a', 'b' ] ]
+&gt; s.toArray()[4].push("c");
+3
+&gt; s.toArray();
+[ 1, 2, 3, 4, [ 'a', 'b', 'c' ] ]
+</code></pre>
+
+<h4>
+<a name="tostring-1" class="anchor" href="#tostring-1"><span class="octicon octicon-link"></span></a>toString()</h4>
+
+<p>Convert this set into a string.</p>
+
+<p><em>Return:</em> A string.</p>
+
+<pre lang="node"><code>&gt; s.toString();
+'[1,2,3,4]'
+</code></pre>
+
+<h3>
+<a name="map-1" class="anchor" href="#map-1"><span class="octicon octicon-link"></span></a>Map</h3>
+
+<p>A map is structured as a tree sorted by the keys. It provides the capability of looking up a value associated with a key.</p>
+
+<p>A map can be converted into a JavaScript object, using the <code>toObject()</code> function. However, there is an important difference between the two, though <code>toObject()</code>, and subsequently <code>toString()</code> that depends to <code>toObject()</code>, obscure this difference. Keys in a map are allowed to be of any primitive data type, array, collection, or combination of these, wheres keys in a JavaScript object can only be strings. Therefore, if a value is associated with integer <code>1</code> in a map, one cannot retrieve this value back by invoking <code>get("1")</code>, where string <code>"1"</code> is used as the key for lookup.</p>
+
+<p>Due to map's sorted nature, some functions below allow to access the map by an index, which points to the location of the sorted tree. A <code>entry</code> object is a common way of returning both the key and the value at that location.</p>
+
+<p><em>Entry:</em> An <code>entry</code> is a (<code>key</code>, <code>value</code>) pair in the map. An entry object provides a <code>key()</code> function to return the key, a <code>value()</code> function to return the value, a <code>toObject()</code> function to return an equivalent JavaScript object, and a <code>toString()</code> function to return the string that describes it.</p>
+
+<p>Examples below assume set <code>m</code> is initialized with entries <code>{1:"a", 2:"b", 3:"c", 4:"d"}</code>:</p>
+
+<pre lang="node"><code>&gt; var m = new Map({1:"a",2:"b","a":"b","c":"d"}).set(3,"c").set(4,"d");
+undefined
+&gt; m.keys();
+[ 3, 4, '1', '2', 'a', 'c' ]
+&gt; m.toObject();
+{ '1': 'a', '2': 'b', '3': 'c', '4': 'd', a: 'b', c: 'd' }
+&gt; m.get(1);
+undefined
+&gt; m.get("1");
+'a'
+&gt; m.get(3);
+'c'
+</code></pre>
+
+<h4>
+<a name="clear-2" class="anchor" href="#clear-2"><span class="octicon octicon-link"></span></a>clear()</h4>
+
+<p>Remove all elements from this set.</p>
+
+<p><em>Return:</em> This set.</p>
+
+<pre lang="node"><code>&gt; m.clear().toObject();
+{}
+</code></pre>
+
+<h4>
+<a name="eachcallback-2" class="anchor" href="#eachcallback-2"><span class="octicon octicon-link"></span></a>each(callback)</h4>
+
+<p>Iterate over entries of this map, and invoke the <code>callback</code> function for each entry. The callback function should be of the form <code>function(v) { ... }</code>. <code>v</code> is the entry. The callback function may return <code>false</code> indicating the iteration should stop immediately. Any other returned value is ignored.</p>
+
+<p><em>Return:</em> This map.</p>
+
+<pre lang="node"><code>&gt; m.each(function(v){if(v.key()%2==0){console.log(v.toObject()); return false;}});
+{ key: 4, value: 'd' }
+</code></pre>
+
+<h4>
+<a name="equalsobject-2" class="anchor" href="#equalsobject-2"><span class="octicon octicon-link"></span></a>equals(object)</h4>
+
+<p>Test whether this map equals the given object. (See vector's <code>equals</code> function for definition of equality.)</p>
+
+<p><em>Return:</em> <code>true</code> or <code>false</code>.</p>
+
+<pre lang="node"><code>&gt; m.equals(new Map(m.toObject())); // false, because toObject() converts all keys to strings.
+false
+&gt; m.equals(new Map(m));
+true
+</code></pre>
+
+<h4>
+<a name="filtercallback-2" class="anchor" href="#filtercallback-2"><span class="octicon octicon-link"></span></a>filter(callback)</h4>
+
+<p>Return in an array all entries that make the <code>callback</code> function return <code>true</code>. The callback function should be of the form <code>function(v) { ... }</code>.</p>
+
+<p><em>Return:</em> An array of entries for which the callback function returns <code>true</code>.</p>
+
+<pre lang="node"><code>&gt; m.filter(function(v){return v.key()%2==0;}).toString();
+'{"key":4,"value":"d"},{"key":"2","value":"b"}'
+</code></pre>
+
+<h4>
+<a name="findcallback-2" class="anchor" href="#findcallback-2"><span class="octicon octicon-link"></span></a>find(callback)</h4>
+
+<p>Return the first entry of this map that makes the <code>callback</code> function return <code>true</code>. The callback function should be of the form <code>function(v) { ... }</code>.</p>
+
+<p><em>Return:</em> The first entry of this map for which the callback function returns <code>true</code>.</p>
+
+<pre lang="node"><code>&gt; m.find(function(v){return v.key()%2==0;}).toObject();
+{ key: 4, value: 'd' }
+</code></pre>
+
+<h4>
+<a name="getkey-" class="anchor" href="#getkey-"><span class="octicon octicon-link"></span></a>get(key, ...)</h4>
+
+<p>Get value of this map associated with the specified keys.</p>
+
+<p><em>Return:</em> If only 1 key is given as parameter, value in this map associated with that key; if multiple keys are given, an array of values associated with those indexes.</p>
+
+<pre lang="node"><code>&gt; m.get("1");
+'a'
+&gt; m.get(1);
+undefined
+&gt; m.get(1,4,"a",3);
+[ , 'd', 'b', 'c' ]
+</code></pre>
+
+<h4>
+<a name="getatindex-" class="anchor" href="#getatindex-"><span class="octicon octicon-link"></span></a>getAt(index, ...)</h4>
+
+<p>Get entry of this map at the specified indexes.</p>
+
+<p><em>Return:</em> If only 1 index is given as parameter, entry of this map at that index; if multiple indexes are given, an array of entries at those indexes.</p>
+
+<pre lang="node"><code>&gt; m.getAt(0).toObject();
+{ key: 3, value: 'c' }
+&gt; m.getAt(1,4,8,3).toString();
+'{"key":4,"value":"d"},{"key":"a","value":"b"},,{"key":"2","value":"b"}'
+</code></pre>
+
+<h4>
+<a name="haskey-" class="anchor" href="#haskey-"><span class="octicon octicon-link"></span></a>has(key, ...)</h4>
+
+<p>Check whether the given keys exist in the map.</p>
+
+<p><em>Return:</em> If only 1 key is given as parameter, <code>true</code> or <code>false</code>; if multiple keys are given, an array of boolean values, each identifying whether the corresponding key exists.</p>
+
+<pre lang="node"><code>&gt; m.has(2,4,6)
+[ false, true, false ]
+&gt; m.has(4)
+true
+</code></pre>
+
+<h4>
+<a name="isempty-2" class="anchor" href="#isempty-2"><span class="octicon octicon-link"></span></a>isEmpty()</h4>
+
+<p>Test whether the map is empty.</p>
+
+<p><em>Return:</em> <code>true</code> or <code>false</code>.</p>
+
+<pre lang="node"><code>&gt; m.isEmpty();
+false
+</code></pre>
+
+<h4>
+<a name="reducecallback-memo-2" class="anchor" href="#reducecallback-memo-2"><span class="octicon octicon-link"></span></a>reduce(callback, memo)</h4>
+
+<p>Iterates over all entries of this map and invoke the <code>callback</code> function for each entry. Each time a <code>memo</code> value is passed into the callback, and the return value of the callback becomes the memo value of the next iteration. The return value in the last iteration is the return value of the <code>reduce</code> function itself. The callback should be of the form <code>function(memo, v){ ... }</code>.</p>
+
+<p><em>Return:</em> The return value of the callback function in the last iteration.</p>
+
+<pre lang="node"><code>&gt; m.reduce(function(memo, v){return memo+v.value()}, "");
+'cdabbd'
+</code></pre>
+
+<h4>
+<a name="reducerightcallback-memo-2" class="anchor" href="#reducerightcallback-memo-2"><span class="octicon octicon-link"></span></a>reduceRight(callback, memo)</h4>
+
+<p>Perform the same function as <code>reduce</code>, but iterate entries of this map in reverse order.</p>
+
+<p><em>Return:</em> The return value of the callback function in the last iteration.</p>
+
+<pre lang="node"><code>&gt; m.reduceRight(function(memo, v){return memo+v.value()}, "");
+'dbbadc'
+</code></pre>
+
+<h4>
+<a name="removekey-" class="anchor" href="#removekey-"><span class="octicon octicon-link"></span></a>remove(key, ...)</h4>
+
+<p>Remove entries identified by the given keys from this map.</p>
+
+<p><em>Return:</em> This map.</p>
+
+<pre lang="node"><code>&gt; m.remove(3,4).toObject();
+{ '1': 'a', '2': 'b', a: 'b', c: 'd' }
+</code></pre>
+
+<h4>
+<a name="removeatindex--2" class="anchor" href="#removeatindex--2"><span class="octicon octicon-link"></span></a>removeAt(index, ...)</h4>
+
+<p>Remove entries at the specified indexes from this map. For any index greater than size of this map, there is no effect.</p>
+
+<p><em>Return:</em> This set.</p>
+
+<pre lang="node"><code>&gt; m.removeAt(0,3,5).toObject();
+{ '1': 'a', '4': 'd', a: 'b' }
+</code></pre>
+
+<h4>
+<a name="removelast-2" class="anchor" href="#removelast-2"><span class="octicon octicon-link"></span></a>removeLast()</h4>
+
+<p>Remove last entry of this map. If this map is empty, there is no effect.</p>
+
+<p><em>Return:</em> This map.</p>
+
+<pre lang="node"><code>&gt; m.removeLast().removeLast().toObject();
+{ '1': 'a', '2': 'b', '3': 'c', '4': 'd' }
+&gt; m.removeLast().removeLast().removeLast().removeLast().toObject();
+{}
+</code></pre>
+
+<h4>
+<a name="removerangestart-end-2" class="anchor" href="#removerangestart-end-2"><span class="octicon octicon-link"></span></a>removeRange(start, end)</h4>
+
+<p>Remove entries between the <code>start</code> index (inclusive) and the <code>end</code> index (exclusive). If <code>start</code> is greater than or equal to size of this map, there is no effect. If <code>end</code> is greater than or equal to size of this map, all entries from <code>start</code> index are removed.</p>
+
+<p><em>Return:</em> This map.</p>
+
+<pre lang="node"><code>&gt; m.removeRange(9,20).toObject();
+{ '1': 'a', '2': 'b', '3': 'c', '4': 'd', a: 'b', c: 'd' }
+&gt; m.removeRange(0,0).toObject();
+{ '1': 'a', '2': 'b', '3': 'c', '4': 'd', a: 'b', c: 'd' }
+&gt; m.removeRange(0,1).toObject();
+{ '1': 'a', '2': 'b', '4': 'd', a: 'b', c: 'd' }
+&gt; m.removeRange(1,999).toObject();
+{ '4': 'd' }
+</code></pre>
+
+<h4>
+<a name="setkey-value" class="anchor" href="#setkey-value"><span class="octicon octicon-link"></span></a>set(key, value)</h4>
+
+<p>Set a new value associated with a key. If the key already exists in the map, existing value is substituted by the given new value. If the key does not exist, the given (key, value) entry is added to the map.</p>
+
+<p><em>Return:</em> This map.</p>
+
+<pre lang="node"><code>&gt; m.set(3,"x").set(4,"y").toObject();
+{ '1': 'a', '2': 'b', '3': 'x', '4': 'y', a: 'b', c: 'd' }
+</code></pre>
+
+<h4>
+<a name="setallobject" class="anchor" href="#setallobject"><span class="octicon octicon-link"></span></a>setAll(object)</h4>
+
+<p>Set all the values in <code>object</code> in the map. The object can be another map or a JavaScript object.</p>
+
+<p><em>Return:</em> This map.</p>
+
+<pre lang="node"><code>&gt; m.setAll({3:"x",4:"y"}).toObject();
+{ '1': 'a', '2': 'b', '3': 'x', '4': 'y', a: 'b', c: 'd' }
+&gt; m.setAll(new Map({null:undefined})).toObject();
+{ '1': 'a',
+  '2': 'b',
+  '3': 'c',
+  '4': 'd',
+  a: 'b',
+  c: 'd',
+  null: undefined }
+</code></pre>
+
+<h4>
+<a name="size-2" class="anchor" href="#size-2"><span class="octicon octicon-link"></span></a>size()</h4>
+
+<p>Check the size of the map.</p>
+
+<p><em>Return:</em> Number of entries in this map.</p>
+
+<pre lang="node"><code>&gt; m.size();
+6
+</code></pre>
+
+<h4>
+<a name="toarray-2" class="anchor" href="#toarray-2"><span class="octicon octicon-link"></span></a>toArray()</h4>
+
+<p>Convert this map into an array that contains the same entries. If the map contains an entry with an array or a collection as its key or value, the same instance of array or collection will also be the key or value of the corresponding entry in the resulting array.</p>
+
+<p><em>Return:</em> An array.</p>
+
+<pre lang="node"><code>&gt; m.toArray().toString();
+'{"key":3,"value":"c"},{"key":4,"value":"d"},{"key":"1","value":"a"},{"key":"2","value":"b"},{"key":"a","value":"b"},{"key":"c","value":"d"}'
+</code></pre>
+
+<h4>
+<a name="toobject" class="anchor" href="#toobject"><span class="octicon octicon-link"></span></a>toObject()</h4>
+
+<p>Convert this map into a JavaScript object. All keys in the map are converted into strings using their <code>toString()</code> functions before storing into the object. As a result, values of some originally distinct keys, such as <code>1</code> and <code>"1"</code>, are stored into the same field of the object. In such a case, value of the greater key according to keys' sorting order overwrites value of the smaller key. Because of this conversion, <code>new Map(m.toObject())</code> does not always produce an equivalent map as <code>m</code>.</p>
+
+<pre lang="node"><code>&gt; m.toObject();
+{ '1': 'a', '2': 'b', '3': 'c', '4': 'd', a: 'b', c: 'd' }
+&gt; new Map().set(m, 1).toObject();
+{ '{"1":"a","2":"b","3":"c","4":"d","a":"b","c":"d"}': 1 }
+</code></pre>
+
+<h4>
+<a name="tostring-2" class="anchor" href="#tostring-2"><span class="octicon octicon-link"></span></a>toString()</h4>
+
+<p>Convert this map into a string. This is equivalent to calling <code>toObject()</code> and then calling <code>toString()</code> on the returned object. Because of this, the returned string may not contain all the keys and values of the original map. (See <code>toObject()</code> for explanation.)</p>
+
+<p><em>Return:</em> A string.</p>
+
+<pre lang="node"><code>&gt; m.toString();
+'{"1":"a","2":"b","3":"c","4":"d","a":"b","c":"d"}'
+</code></pre>
+      </section>
+    </div>
+    <footer>
+      <p>Project maintained by <a href="https://github.com/tfeng">tfeng</a></p>
+      <p>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></p>
+    </footer>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>

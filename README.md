@@ -1,89 +1,5 @@
-- [collection.js](#collectionjs)
-    - [Overview](#overview)
-		- [Node.js cross-platform native collection library](#nodejs-cross-platform-native-collection-library)
-		- [Supported Collection Types](#supported-collection-types)
-			- [Vector](#vector)
-			- [Set](#set)
-			- [Map](#map)
-	- [Setup](#setup)
-		- [Prerequisite](#prerequisite)
-		- [Installation](#installation)
-		- [Testing](#testing)
-		- [Vector](#vector-1)
-			- [add(value, ...)](#addvalue-)
-			- [addAll(object)](#addallobject)
-	- [API Documentation](#api-documentation)
-		- [Vector](#vector-1)
-			- [clear()](#clear)
-			- [each(callback)](#eachcallback)
-			- [equals(object)](#equalsobject)
-			- [filter(callback)](#filtercallback)
-			- [find(callback)](#findcallback)
-			- [get(index, ...)](#getindex-)
-			- [has(value, ...)](#hasvalue-)
-			- [index(value, ...)](#indexvalue-)
-			- [isEmpty()](#isempty)
-			- [map(callback)](#mapcallback)
-			- [reduce(callback, memo)](#reducecallback-memo)
-			- [reduceRight(callback, memo)](#reducerightcallback-memo)
-			- [remove(value, ...)](#removevalue-)
-			- [removeAt(index, ...)](#removeatindex-)
-			- [removeLast()](#removelast)
-			- [removeRange(start, end)](#removerangestart-end)
-			- [reverse()](#reverse)
-			- [set(index, value)](#setindex-value)
-			- [size()](#size)
-			- [toArray()](#toarray)
-			- [toString()](#tostring)
-		- [Set](#set-1)
-			- [add(value, ...)](#addvalue--1)
-			- [addAll(object)](#addallobject-1)
-			- [clear()](#clear-1)
-			- [each(callback)](#eachcallback-1)
-			- [equals(object)](#equalsobject-1)
-			- [filter(callback)](#filtercallback-1)
-			- [find(callback)](#findcallback-1)
-			- [get(index, ...)](#getindex--1)
-			- [has(value, ...)](#hasvalue--1)
-			- [index(value, ...)](#indexvalue--1)
-			- [isEmpty()](#isempty-1)
-			- [reduce(callback, memo)](#reducecallback-memo-1)
-			- [reduceRight(callback, memo)](#reducerightcallback-memo-1)
-			- [remove(value, ...)](#removevalue--1)
-			- [removeAt(index, ...)](#removeatindex--1)
-			- [removeLast()](#removelast-1)
-			- [removeRange(start, end)](#removerangestart-end-1)
-			- [size()](#size-1)
-			- [toArray()](#toarray-1)
-			- [toString()](#tostring-1)
-		- [Map](#map-1)
-			- [clear()](#clear-2)
-			- [each(callback)](#eachcallback-2)
-			- [equals(object)](#equalsobject-2)
-			- [filter(callback)](#filtercallback-2)
-			- [find(callback)](#findcallback-2)
-			- [get(key, ...)](#getkey-)
-			- [getAt(index, ...)](#getatindex-)
-			- [has(key, ...)](#haskey-)
-			- [isEmpty()](#isempty-2)
-			- [reduce(callback, memo)](#reducecallback-memo-2)
-			- [reduceRight(callback, memo)](#reducerightcallback-memo-2)
-			- [remove(key, ...)](#removekey-)
-			- [removeAt(index, ...)](#removeatindex--2)
-			- [removeLast()](#removelast-2)
-			- [removeRange(start, end)](#removerangestart-end-2)
-			- [set(key, value)](#setkey-value)
-			- [setAll(object)](#setallobject)
-			- [size()](#size-2)
-			- [toArray()](#toarray-2)
-			- [toObject()](#toobject)
-			- [toString()](#tostring-2)
-
 collection.js
 ==========
-
-Overview
-----------
 
 ### Node.js cross-platform native collection library
 
@@ -92,6 +8,87 @@ JavaScript has limited support for collections. Associate array and objects are 
 `collection.js` is a native implementation of such data types as vector, set and map, based on their respective underlying implementation in C++. These data types are highly efficient due to the fact that operations on these data types take advantage of the underlying data structures that represent them, and that most of the heavy-lifting work is done at the C++ level, such as looking up a key in a map and modifying elements of a vector while iterating over them.
 
 Experimental result has shown that in many use cases, `collection.js` significantly improves not only the time it takes to run an algorithm with intensive data access or manipulation, but also the amount of data objects that can fit in Node.js' process memory.
+
+- [Overview](#overview)
+	- [Supported Collection Types](#supported-collection-types)
+		- [Vector](#vector)
+		- [Set](#set)
+		- [Map](#map)
+	- [Setup](#setup)
+		- [Prerequisite](#prerequisite)
+		- [Installation](#installation)
+		- [Testing](#testing)
+- [API Documentation](#api-documentation)
+	- [Vector](#vector-1)
+		- [add(value, ...)](#addvalue-)
+		- [addAll(object)](#addallobject)
+		- [clear()](#clear)
+		- [each(callback)](#eachcallback)
+		- [equals(object)](#equalsobject)
+		- [filter(callback)](#filtercallback)
+		- [find(callback)](#findcallback)
+		- [get(index, ...)](#getindex-)
+		- [has(value, ...)](#hasvalue-)
+		- [index(value, ...)](#indexvalue-)
+		- [isEmpty()](#isempty)
+		- [map(callback)](#mapcallback)
+		- [reduce(callback, memo)](#reducecallback-memo)
+		- [reduceRight(callback, memo)](#reducerightcallback-memo)
+		- [remove(value, ...)](#removevalue-)
+		- [removeAt(index, ...)](#removeatindex-)
+		- [removeLast()](#removelast)
+		- [removeRange(start, end)](#removerangestart-end)
+		- [reverse()](#reverse)
+		- [set(index, value)](#setindex-value)
+		- [size()](#size)
+		- [toArray()](#toarray)
+		- [toString()](#tostring)
+	- [Set](#set-1)
+		- [add(value, ...)](#addvalue--1)
+		- [addAll(object)](#addallobject-1)
+		- [clear()](#clear-1)
+		- [each(callback)](#eachcallback-1)
+		- [equals(object)](#equalsobject-1)
+		- [filter(callback)](#filtercallback-1)
+		- [find(callback)](#findcallback-1)
+		- [get(index, ...)](#getindex--1)
+		- [has(value, ...)](#hasvalue--1)
+		- [index(value, ...)](#indexvalue--1)
+		- [isEmpty()](#isempty-1)
+		- [reduce(callback, memo)](#reducecallback-memo-1)
+		- [reduceRight(callback, memo)](#reducerightcallback-memo-1)
+		- [remove(value, ...)](#removevalue--1)
+		- [removeAt(index, ...)](#removeatindex--1)
+		- [removeLast()](#removelast-1)
+		- [removeRange(start, end)](#removerangestart-end-1)
+		- [size()](#size-1)
+		- [toArray()](#toarray-1)
+		- [toString()](#tostring-1)
+	- [Map](#map-1)
+		- [clear()](#clear-2)
+		- [each(callback)](#eachcallback-2)
+		- [equals(object)](#equalsobject-2)
+		- [filter(callback)](#filtercallback-2)
+		- [find(callback)](#findcallback-2)
+		- [get(key, ...)](#getkey-)
+		- [getAt(index, ...)](#getatindex-)
+		- [has(key, ...)](#haskey-)
+		- [isEmpty()](#isempty-2)
+		- [reduce(callback, memo)](#reducecallback-memo-2)
+		- [reduceRight(callback, memo)](#reducerightcallback-memo-2)
+		- [remove(key, ...)](#removekey-)
+		- [removeAt(index, ...)](#removeatindex--2)
+		- [removeLast()](#removelast-2)
+		- [removeRange(start, end)](#removerangestart-end-2)
+		- [set(key, value)](#setkey-value)
+		- [setAll(object)](#setallobject)
+		- [size()](#size-2)
+		- [toArray()](#toarray-2)
+		- [toObject()](#toobject)
+		- [toString()](#tostring-2)
+
+Overview
+----------
 
 ### Supported Collection Types
 
@@ -117,14 +114,13 @@ The `put` operation is to put an entry in to the map, so that the key of the ent
 
 `Each` method of a `map` can be used to iterate over entries.
 
-Setup
-----------
+### Setup
 
-### Prerequisite
+#### Prerequisite
 
 See [node-gyp](https://github.com/TooTallNate/node-gyp) documentation (under Installation section) for software packages required to be installed before proceeding.
 
-### Installation
+#### Installation
 
 Install `collection.js` using the following command:
 
@@ -132,7 +128,7 @@ Install `collection.js` using the following command:
 $ npm install collection
 ```
 
-### Testing
+#### Testing
 
 After installing `collection.js`, start `node` to see whether it is working as expected.
 

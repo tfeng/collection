@@ -8,6 +8,9 @@
                   "src/Set.cc",
                   "src/Vector.cc"],
       "conditions": [
+        ['OS=="linux"', {
+            'cflags_cc!': ['-fno-exceptions']
+        }],
         ['OS=="win"', {
           'msvs_settings': {
             'VCCLCompilerTool': {

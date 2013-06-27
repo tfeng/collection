@@ -54,7 +54,7 @@ void Map::InitializeValues(Handle<Object> thisObject, Handle<Value> argument) {
     } else {
       Local<Array> propertyNames = initObject->GetPropertyNames();
       for (size_t i = 0; i < propertyNames->Length(); i++) {
-        Local<Value> key = propertyNames->Get(i)->ToString();
+        Local<Value> key = propertyNames->Get((uint32_t) i)->ToString();
         Local<Value> value = initObject->Get(key);
         Storage::iterator it = obj->storage.find((Persistent<Value>) key);
         if (it == obj->storage.end()) {

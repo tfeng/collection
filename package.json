@@ -1,7 +1,7 @@
 {
   "name": "collection",
   "id": "collection",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Node.js cross-platform native collection library",
   "keywords": [
     "collection",

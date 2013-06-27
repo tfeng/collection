@@ -18,7 +18,17 @@ class VectorModifier;
 
 template < class T, class Comparator, class Alloc = allocator<T> > class InternalVector : public vector<T, Alloc> {
   public:
-    typename vector<T, Alloc>::const_iterator find(const T& value) const;
+    inline typename vector<T, Alloc>::const_iterator find(const T& value) const {
+      Comparator comparator;
+      typename vector<T>::const_iterator it = vector<T, Alloc>::begin();
+      while (it != vector<T>::end()) {
+        if (!comparator(*it, value) && !comparator(value, *it)) {
+          break;
+        }
+        it++;
+      }
+      return it;
+    }
 };
 
 /*

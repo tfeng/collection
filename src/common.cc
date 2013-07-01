@@ -51,20 +51,9 @@ bool ValueComparator::operator()(const Handle<Value>& value1, const Handle<Value
   }
 
   if (value1->IsString()) {
-    Handle<String> s1 = value1->ToString();
-    Handle<String> s2 = value2->ToString();
-    int len1 = s1->Utf8Length();
-    int len2 = s2->Utf8Length();
-    int min = len1 < len2 ? len1 : len2;
-    char* buffer1 = new char[min + 1];
-    char* buffer2 = new char[min + 1];
-    s1->WriteUtf8(buffer1, min);
-    s2->WriteUtf8(buffer2, min);
-    buffer1[min] = buffer2[min] = '\0';
-    int result = strcmp(buffer1, buffer2);
-    delete []buffer1;
-    delete []buffer2;
-    return result < 0 || (result == 0 && len1 < len2);
+    string s1 = *String::Utf8Value(value1);
+    string s2 = *String::Utf8Value(value2);
+    return s1 < s2;
   }
 
   if (value1->IsArray()) {

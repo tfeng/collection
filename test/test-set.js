@@ -293,6 +293,10 @@ describe('Set', function() {
         s1.has();
       }, Error);
     });
+
+    it("should not equalize distinct double numbers", function() {
+      assert(!(new Set([1.1]).has(1.2)));
+    });
   });
 
   describe("#index", function() {

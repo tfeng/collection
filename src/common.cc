@@ -34,6 +34,10 @@ bool ValueComparator::operator()(const Handle<Value>& value1, const Handle<Value
     return false;
   }
 
+  if (value1->IsBooleanObject()) {
+    return value1->ToBoolean()->Value() < value2->ToBoolean()->Value();
+  }
+
   if (value1->IsBoolean()) {
     return value1->BooleanValue() < value2->BooleanValue();
   }
@@ -43,11 +47,25 @@ bool ValueComparator::operator()(const Handle<Value>& value1, const Handle<Value
   }
 
   if (value1->IsNumber()) {
-    return value1->IntegerValue() < value2->IntegerValue();
+    return value1->NumberValue() < value2->NumberValue();
   }
 
   if (value1->IsDate()) {
     return Handle<Date>::Cast(value1)->NumberValue() < Handle<Date>::Cast(value2)->NumberValue();
+  }
+
+  if (value1->IsStringObject()) {
+    Handle<String> s1 = value1->ToString();
+    Handle<String> s2 = value2->ToString();
+    int s1Length = s1->Utf8Length();
+    int s2Length = s2->Utf8Length();
+    char* c1 = new char[s1Length + 1];
+    char* c2 = new char[s2Length + 1];
+    s1->WriteUtf8(c1);
+    s2->WriteUtf8(c2);
+    c1[s1Length] = '\0';
+    c2[s2Length] = '\0';
+    return strcmp(c1, c2) < 0;
   }
 
   if (value1->IsString()) {
@@ -106,22 +124,30 @@ int ValueComparator::GetTypeScore(const Handle<Value>& value) const {
     return 1;
   } else if (value->IsNull()) {
     return 2;
-  } else if (value->IsBoolean()) {
+  } else if (value->IsBooleanObject()) {
     return 3;
-  } else if (value->IsNumberObject()) {
+  } else if (value->IsBoolean()) {
     return 4;
-  } else if (value->IsNumber()) {
+  } else if (value->IsInt32()) {
     return 5;
-  } else if (value->IsDate()) {
+  } else if (value->IsUint32()) {
     return 6;
-  } else if (value->IsString()) {
+  } else if (value->IsNumberObject()) {
     return 7;
-  } else if (value->IsArray()) {
+  } else if (value->IsNumber()) {
     return 8;
-  } else if (Set::constructor->HasInstance(value)) {
+  } else if (value->IsDate()) {
     return 9;
-  } else if (Vector::constructor->HasInstance(value)) {
+  } else if (value->IsStringObject()) {
     return 10;
+  } else if (value->IsString()) {
+    return 11;
+  } else if (value->IsArray()) {
+    return 12;
+  } else if (Set::constructor->HasInstance(value)) {
+    return 13;
+  } else if (Vector::constructor->HasInstance(value)) {
+    return 14;
   } else {
     return -1;
   }

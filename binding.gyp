@@ -9,7 +9,14 @@
                   "src/Vector.cc"],
       "conditions": [
         ['OS=="linux"', {
-            'cflags_cc!': ['-fno-exceptions']
+          'cflags_cc!': ['-fno-exceptions']
+        }],
+        ['OS=="mac"', {
+          'xcode_settings': {
+            'OTHER_CFLAGS': [
+              '-fexceptions'
+            ]
+          }
         }],
         ['OS=="win"', {
           'msvs_settings': {
